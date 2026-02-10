@@ -9,13 +9,42 @@
 
       <!-- 登录表单 -->
       <view class="login-form">
-        <view class="form-item">
+        <view class="form-item username-item">
           <input
             type="text"
             v-model="form.username"
             placeholder="用户名/邮箱/手机号"
             class="form-input"
+            @focus="showHistory = historyAccounts.length > 0"
           />
+          <!-- 历史账号下拉按钮 -->
+          <view
+            v-if="historyAccounts.length > 0"
+            class="history-toggle"
+            @click="showHistory = !showHistory"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" :class="{ rotate: showHistory }">
+              <polyline points="6 9 12 15 18 9"/>
+            </svg>
+          </view>
+
+          <!-- 历史账号下拉列表 -->
+          <view v-if="showHistory && historyAccounts.length > 0" class="history-dropdown">
+            <view
+              v-for="(account, index) in historyAccounts"
+              :key="index"
+              class="history-item"
+              @click="selectHistoryAccount(account)"
+            >
+              <text class="history-username">{{ account.username }}</text>
+              <view class="history-delete" @click="removeHistoryAccount(index, $event)">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="18" y1="6" x2="6" y2="18"/>
+                  <line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+              </view>
+            </view>
+          </view>
         </view>
 
         <view class="form-item">
@@ -36,6 +65,7 @@
         </view>
 
         <button
+          type="button"
           class="login-btn"
           :class="{ loading: loading }"
           :disabled="loading || !isFormValid"
@@ -92,6 +122,10 @@ const isFormValid = computed(() => {
   return form.value.username.trim() && form.value.password.trim()
 })
 
+// 历史账号列表（最多保存5个）
+const historyAccounts = ref<Array<{username: string, password: string}>>([])
+const showHistory = ref(false)
+
 const handleLogin = async () => {
   if (!isFormValid.value) return
 
@@ -107,19 +141,63 @@ const handleLogin = async () => {
   if (result.success) {
     uni.showToast({ title: '登录成功', icon: 'success' })
 
-    // 记住账号
+    // 记住密码功能 - 支持多账号
     if (rememberMe.value) {
-      uni.setStorageSync('rememberedUsername', form.value.username)
-    } else {
-      uni.removeStorageSync('rememberedUsername')
+      saveAccountToHistory(form.value.username, form.value.password)
     }
 
-    // 跳转到首页
+    // 跳转到首页（使用 redirectTo，因为没有配置 tabBar）
     setTimeout(() => {
-      uni.switchTab({ url: '/pages/index/index' })
+      uni.redirectTo({ url: '/pages/index/index' })
     }, 1500)
   } else {
     uni.showToast({ title: result.message, icon: 'none' })
+  }
+}
+
+// 保存账号到历史记录
+const saveAccountToHistory = (username: string, password: string) => {
+  let accounts = uni.getStorageSync('loginHistoryAccounts') || []
+
+  // 查找是否已存在该账号
+  const existingIndex = accounts.findIndex((acc: any) => acc.username === username)
+
+  const accountInfo = {
+    username: username,
+    password: btoa(password), // Base64加密
+    loginTime: Date.now()
+  }
+
+  if (existingIndex >= 0) {
+    // 更新已有账号
+    accounts[existingIndex] = accountInfo
+  } else {
+    // 添加新账号到开头
+    accounts.unshift(accountInfo)
+    // 最多保留5个账号
+    if (accounts.length > 5) {
+      accounts = accounts.slice(0, 5)
+    }
+  }
+
+  uni.setStorageSync('loginHistoryAccounts', accounts)
+}
+
+// 选择历史账号
+const selectHistoryAccount = (account: {username: string, password: string}) => {
+  form.value.username = account.username
+  form.value.password = atob(account.password)
+  rememberMe.value = true
+  showHistory.value = false
+}
+
+// 删除历史账号
+const removeHistoryAccount = (index: number, event: Event) => {
+  event.stopPropagation()
+  historyAccounts.value.splice(index, 1)
+  uni.setStorageSync('loginHistoryAccounts', historyAccounts.value)
+  if (historyAccounts.value.length === 0) {
+    showHistory.value = false
   }
 }
 
@@ -135,11 +213,19 @@ const wechatLogin = () => {
   uni.showToast({ title: '微信登录开发中', icon: 'none' })
 }
 
-// 检查是否有记住的账号
+// 检查是否有记住的账号和密码
 const checkRememberedUser = () => {
-  const remembered = uni.getStorageSync('rememberedUsername')
-  if (remembered) {
-    form.value.username = remembered
+  const accounts = uni.getStorageSync('loginHistoryAccounts') || []
+  historyAccounts.value = accounts.map((acc: any) => ({
+    username: acc.username,
+    password: acc.password
+  }))
+
+  // 自动填充最近登录的账号
+  if (accounts.length > 0) {
+    const lastAccount = accounts[0]
+    form.value.username = lastAccount.username
+    form.value.password = atob(lastAccount.password)
     rememberMe.value = true
   }
 }
@@ -329,5 +415,71 @@ checkRememberedUser()
 
 .method-icon.wechat {
   background: #07C160;
+}
+
+/* 历史账号下拉 */
+.username-item {
+  position: relative;
+}
+
+.history-toggle {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  padding: 4px;
+  cursor: pointer;
+  color: var(--text-tertiary);
+}
+
+.history-toggle svg.rotate {
+  transform: rotate(180deg);
+}
+
+.history-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: var(--bg-card);
+  border: 1px solid var(--border-light);
+  border-radius: 8px;
+  margin-top: 4px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  z-index: 100;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.history-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 16px;
+  cursor: pointer;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.history-item:last-child {
+  border-bottom: none;
+}
+
+.history-item:active {
+  background: var(--bg-secondary);
+}
+
+.history-username {
+  font-size: 14px;
+  color: var(--text-primary);
+}
+
+.history-delete {
+  padding: 4px;
+  color: var(--text-tertiary);
+  cursor: pointer;
+}
+
+.history-delete:active {
+  color: var(--accent-coral);
 }
 </style>

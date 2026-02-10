@@ -20,11 +20,11 @@ export const searchApi = {
 
   // 获取热门搜索关键词
   getHotKeywords: (limit: number = 10) => {
-    return get<string[]>('/search/hot-keywords', { limit })
+    return get<PageResult<string>>('/search/hot-keywords', { limit })
   },
 
   // 获取搜索建议
   getSuggestions: (prefix: string, limit: number = 10) => {
-    return get<string[]>('/search/suggestions', { prefix, limit })
+    return get<PageResult<string>>('/search/suggestions', { prefix, limit })
   }
 }

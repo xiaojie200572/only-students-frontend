@@ -2,7 +2,13 @@
   <view class="message-page">
     <!-- 导航栏 -->
     <view class="page-nav">
+      <view class="back-btn" @click="goBack">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M19 12H5M12 19l-7-7 7-7"/>
+        </svg>
+      </view>
       <text class="nav-title">消息</text>
+      <view class="nav-right"></view>
     </view>
 
     <!-- 加载状态 -->
@@ -77,14 +83,11 @@
       </view>
     </scroll-view>
 
-    <!-- 底部导航 -->
-    <TabBar :current="2" />
   </view>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted, onActivated } from 'vue'
-import TabBar from '@/components/TabBar.vue'
 import { messageApi, notificationApi } from '@/api/message'
 import type { Conversation, Notification } from '@/types/api.types'
 
@@ -200,6 +203,11 @@ const handleNotificationClick = (notice: Notification) => {
   }
 }
 
+// 返回上一页
+const goBack = () => {
+  uni.navigateBack()
+}
+
 // 初始化数据
 const initData = async () => {
   loading.value = true
@@ -229,7 +237,6 @@ onActivated(() => {
   min-height: 100vh;
   background: var(--bg-primary);
   padding-top: 60px;
-  padding-bottom: calc(52px + env(safe-area-inset-bottom));
 }
 
 .page-nav {

@@ -2,13 +2,7 @@
   <view class="subscriptions-page">
     <!-- 导航栏 -->
     <view class="page-nav">
-      <view class="back-btn" @click="goBack">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M19 12H5M12 19l-7-7 7-7"/>
-        </svg>
-      </view>
-      <text class="nav-title">我的订阅</text>
-      <view class="nav-right"></view>
+      <text class="nav-title">订阅</text>
     </view>
 
     <!-- 订阅列表 -->
@@ -72,12 +66,16 @@
         </view>
       </view>
     </scroll-view>
+    
+    <!-- 底部导航 -->
+    <TabBar :current="1" />
   </view>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { subscriptionApi } from '@/api'
+import TabBar from '@/components/TabBar.vue'
 import type { Subscription } from '@/types/api.types'
 
 const subscriptions = ref<Subscription[]>([])
@@ -164,6 +162,7 @@ const subscribeAgain = (creatorId: number) => {
 .subscriptions-page {
   min-height: 100vh;
   background: var(--bg-primary);
+  padding-bottom: calc(52px + env(safe-area-inset-bottom));
 }
 
 .page-nav {
@@ -175,19 +174,9 @@ const subscribeAgain = (creatorId: number) => {
   background: var(--bg-primary);
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 0 16px;
+  justify-content: center;
   border-bottom: 1px solid var(--border-light);
   z-index: 100;
-}
-
-.back-btn {
-  width: 40px;
-  height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--text-primary);
 }
 
 .nav-title {
@@ -196,13 +185,9 @@ const subscribeAgain = (creatorId: number) => {
   color: var(--text-primary);
 }
 
-.nav-right {
-  width: 40px;
-}
-
 .content-area {
   margin-top: 60px;
-  height: calc(100vh - 60px);
+  height: calc(100vh - 60px - 52px - env(safe-area-inset-bottom));
 }
 
 .loading-state {

@@ -1,13 +1,7 @@
 <template>
   <view class="favorites-page">
     <view class="page-nav">
-      <view class="back-btn" @click="goBack">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M19 12H5M12 19l-7-7 7-7"/>
-        </svg>
-      </view>
-      <text class="nav-title">我的收藏</text>
-      <view class="nav-right"></view>
+      <text class="nav-title">收藏</text>
     </view>
 
     <scroll-view scroll-y class="content-area">
@@ -48,12 +42,16 @@
         </view>
       </view>
     </scroll-view>
+    
+    <!-- 底部导航 -->
+    <TabBar :current="2" />
   </view>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { get } from '@/api'
+import TabBar from '@/components/TabBar.vue'
 
 const favorites = ref<any[]>([])
 const loading = ref(false)
@@ -115,6 +113,7 @@ const cancelFavorite = (noteId: number) => {
 .favorites-page {
   min-height: 100vh;
   background: var(--bg-primary);
+  padding-bottom: calc(52px + env(safe-area-inset-bottom));
 }
 
 .page-nav {
@@ -126,19 +125,9 @@ const cancelFavorite = (noteId: number) => {
   background: var(--bg-primary);
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 0 16px;
+  justify-content: center;
   border-bottom: 1px solid var(--border-light);
   z-index: 100;
-}
-
-.back-btn {
-  width: 40px;
-  height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--text-primary);
 }
 
 .nav-title {
@@ -147,13 +136,9 @@ const cancelFavorite = (noteId: number) => {
   color: var(--text-primary);
 }
 
-.nav-right {
-  width: 40px;
-}
-
 .content-area {
   margin-top: 60px;
-  height: calc(100vh - 60px);
+  height: calc(100vh - 60px - 52px - env(safe-area-inset-bottom));
 }
 
 .loading-state {

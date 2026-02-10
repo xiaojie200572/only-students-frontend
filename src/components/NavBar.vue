@@ -10,6 +10,7 @@
         class="search-input"
         placeholder="搜索笔记、创作者..."
         v-model="searchKeyword"
+        @focus="goToSearch"
         @confirm="handleSearch"
       />
       <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -57,10 +58,16 @@ const toggleTheme = () => {
   themeStore.toggleTheme()
 }
 
+const goToSearch = () => {
+  uni.redirectTo({
+    url: '/pages/discover/index'
+  })
+}
+
 const handleSearch = () => {
   if (searchKeyword.value.trim()) {
-    uni.navigateTo({
-      url: `/pages/search/index?keyword=${encodeURIComponent(searchKeyword.value)}`
+    uni.redirectTo({
+      url: `/pages/discover/index?keyword=${encodeURIComponent(searchKeyword.value)}`
     })
   }
 }
