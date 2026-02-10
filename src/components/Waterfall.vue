@@ -27,7 +27,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import NoteCard from './NoteCard.vue'
-import type { Note } from '@/stores/note'
+import type { Note } from '@/types/api.types'
 
 interface Props {
   notes: Note[]
