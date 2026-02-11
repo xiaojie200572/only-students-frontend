@@ -118,6 +118,14 @@
                 />
                 <text class="user-name">{{ user.nickname || user.username }}</text>
                 <text class="user-bio" v-if="user.bio">{{ user.bio.substring(0, 10) }}...</text>
+                <view 
+                  v-if="user.id !== currentUserId"
+                  class="follow-btn-mini" 
+                  :class="{ following: user.isFollowing }"
+                  @click.stop="toggleFollow(user)"
+                >
+                  <text>{{ user.isFollowing ? '已关注' : '关注' }}</text>
+                </view>
               </view>
             </view>
           </scroll-view>
@@ -740,6 +748,20 @@ onMounted(() => {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.follow-btn-mini {
+  margin-top: 4px;
+  padding: 2px 10px;
+  background: var(--accent-warm);
+  border-radius: 10px;
+  font-size: 11px;
+  color: white;
+}
+
+.follow-btn-mini.following {
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
 }
 
 /* 笔记网格 */

@@ -29,8 +29,8 @@ export const noteApi = {
   },
 
   // 发布笔记
-  publish: (noteId: number) => {
-    return post<void>(`/note/${noteId}/publish`)
+   publish: (noteId: number) => {
+    return post<void>(`/note/${noteId}/publish`, {})
   },
 
   // 获取热门笔记

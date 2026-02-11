@@ -3,14 +3,14 @@
     <view class="page-nav">
       <view class="back-btn" @click="goBack">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M19 12H5M12 19l-7-7 7-7"/>
+          <path d="M19 12H5M12 19l-7-7 7-7" />
         </svg>
       </view>
       <text class="nav-title">我的笔记</text>
       <view class="nav-right">
         <view class="publish-btn" @click="goToPublish">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M12 5v14M5 12h14"/>
+            <path d="M12 5v14M5 12h14" />
           </svg>
         </view>
       </view>
@@ -24,24 +24,19 @@
 
       <view v-else-if="notes.length === 0" class="empty-state">
         <svg class="empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-          <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
-          <line x1="9" y1="9" x2="15" y2="9"/>
-          <line x1="9" y1="15" x2="15" y2="15"/>
+          <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+          <line x1="9" y1="9" x2="15" y2="9" />
+          <line x1="9" y1="15" x2="15" y2="15" />
         </svg>
         <text class="empty-title">暂无笔记</text>
         <text class="empty-desc">快去发布你的第一篇笔记吧</text>
-        <view class="empty-action" @click="goToPublish">发布笔记</view>
+        <view class="empty-action" @click="goToPublish">创建笔记</view>
       </view>
 
       <view v-else class="notes-list">
-        <view
-          v-for="note in notes"
-          :key="note.id"
-          class="note-card"
-          @click="goToNoteDetail(note.id)"
-        >
+        <view v-for="note in notes" :key="note.id" class="note-card" @click="goToNoteDetail(note.id)">
           <view class="note-header">
-            <image v-if="note.coverImage" :src="note.coverImage" class="note-cover" mode="aspectFill"/>
+            <image v-if="note.coverImage" :src="note.coverImage" class="note-cover" mode="aspectFill" />
             <view v-else class="note-cover-placeholder">
               <text>笔记</text>
             </view>
@@ -59,20 +54,22 @@
             <view class="note-stats">
               <view class="stat-item">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                  <circle cx="12" cy="12" r="3"/>
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                  <circle cx="12" cy="12" r="3" />
                 </svg>
                 <text>{{ note.viewCount || 0 }}</text>
               </view>
               <view class="stat-item">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                  <path
+                    d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
                 </svg>
                 <text>{{ note.likeCount || 0 }}</text>
               </view>
               <view class="stat-item">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>
+                  <path
+                    d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
                 </svg>
                 <text>{{ note.commentCount || 0 }}</text>
               </view>
@@ -82,17 +79,26 @@
           <view class="note-actions">
             <view class="action-btn" @click.stop="editNote(note)">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
               </svg>
               <text>编辑</text>
             </view>
-            <view class="action-btn delete" @click.stop="deleteNote(note)">
+            <view v-if="note.status === 0 || note.status === 1" class="action-btn publish"
+              @click.stop="publishNote(note)">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polyline points="3 6 5 6 21 6"/>
-                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                <path d="M12 19l7-7 3 3-7 7-3-3z" />
+                <path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z" />
+                <path d="M2 2l7.586 7.586" />
+                <circle cx="11" cy="11" r="2" />
               </svg>
-              <text>删除</text>
+              <text>发布</text>
+            </view>
+            <view v-else class="action-btn published">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+              <text>已发布</text>
             </view>
           </view>
         </view>
@@ -170,6 +176,43 @@ const deleteNote = (note: Note) => {
           uni.showToast({ title: '删除成功', icon: 'success' })
         } catch (error) {
           uni.showToast({ title: '删除失败', icon: 'none' })
+        }
+      }
+    }
+  })
+}
+
+const publishNote = (note: Note) => {
+  // 详细调试日志
+  console.log('=== 发布笔记调试 ===')
+  console.log('笔记对象:', JSON.stringify(note))
+  console.log('笔记ID类型:', typeof note.id)
+  console.log('笔记ID值:', note.id)
+  console.log('笔记ID是否为null:', note.id === null)
+  console.log('笔记ID是否为undefined:', note.id === undefined)
+
+  if (!note.id) {
+    uni.showToast({ title: '笔记ID无效', icon: 'none' })
+    console.error('错误: 笔记ID无效')
+    return
+  }
+
+  uni.showModal({
+    title: '确认发布',
+    content: `确定要发布笔记"${note.title}"吗？发布后其他用户将可以看到。`,
+    confirmColor: '#4CAF50',
+    success: async (res) => {
+      if (res.confirm) {
+        try {
+          console.log('调用发布API, noteId:', note.id)
+          await noteApi.publish(note.id)
+          note.status = 2 // 更新状态为已发布
+          uni.showToast({ title: '发布成功', icon: 'success' })
+        } catch (error: any) {
+          console.error('发布失败详细错误:', error)
+          console.error('错误响应:', error.response)
+          console.error('错误请求:', error.request)
+          uni.showToast({ title: `发布失败: ${error.message || '未知错误'}`, icon: 'none' })
         }
       }
     }
@@ -260,7 +303,9 @@ const goBack = () => {
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .empty-state {
@@ -414,6 +459,16 @@ const goBack = () => {
 
 .action-btn.delete {
   color: #F44336;
+  border-left: 1px solid var(--border-light);
+}
+
+.action-btn.publish {
+  color: var(--accent-warm);
+  border-left: 1px solid var(--border-light);
+}
+
+.action-btn.published {
+  color: #4CAF50;
   border-left: 1px solid var(--border-light);
 }
 

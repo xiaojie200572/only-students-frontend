@@ -6,13 +6,13 @@
           <path d="M19 12H5M12 19l-7-7 7-7"/>
         </svg>
       </view>
-      <text class="nav-title">发布笔记</text>
+      <text class="nav-title">{{ isEdit ? '编辑笔记' : '创建笔记' }}</text>
       <view class="nav-right">
         <view
-          :class="['publish-btn', { loading: loading }]"
-          @click="handlePublish"
+          :class="['save-btn', { loading: loading }]"
+          @click="handleSave"
         >
-          <text v-if="!loading">发布</text>
+          <text v-if="!loading">保存</text>
           <view v-else class="btn-spinner"></view>
         </view>
       </view>
@@ -99,55 +99,24 @@
       <!-- 可见性设置 -->
       <view class="section">
         <text class="section-title">可见性设置</text>
-        <view class="visibility-list">
-          <view
-            :class="['visibility-item', { active: form.visibility === 0 }]"
-            @click="form.visibility = 0"
+        <view class="visibility-select-wrapper">
+          <picker 
+            mode="selector" 
+            :range="visibilityOptions" 
+            :value="form.visibility"
+            @change="onVisibilityChange"
           >
-            <view class="visibility-info">
-              <text class="visibility-name">公开</text>
-              <text class="visibility-desc">所有人可见</text>
-            </view>
-            <view v-if="form.visibility === 0" class="check-icon">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polyline points="20 6 9 17 4 12"/>
+            <view class="visibility-picker">
+              <text class="picker-label">{{ visibilityOptions[form.visibility] }}</text>
+              <svg class="picker-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="6 9 12 15 18 9"/>
               </svg>
             </view>
-          </view>
-
-          <view
-            :class="['visibility-item', { active: form.visibility === 1 }]"
-            @click="form.visibility = 1"
-          >
-            <view class="visibility-info">
-              <text class="visibility-name">订阅者可见</text>
-              <text class="visibility-desc">仅订阅者可查看完整内容</text>
-            </view>
-            <view v-if="form.visibility === 1" class="check-icon">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polyline points="20 6 9 17 4 12"/>
-              </svg>
-            </view>
-          </view>
-
-          <view
-            :class="['visibility-item', { active: form.visibility === 2 }]"
-            @click="form.visibility = 2"
-          >
-            <view class="visibility-info">
-              <text class="visibility-name">付费可见</text>
-              <text class="visibility-desc">需要付费购买后查看</text>
-            </view>
-            <view v-if="form.visibility === 2" class="check-icon">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polyline points="20 6 9 17 4 12"/>
-              </svg>
-            </view>
-          </view>
+          </picker>
         </view>
 
-        <!-- 价格设置（仅付费可见时显示） -->
-        <view v-if="form.visibility === 2" class="price-setting">
+        <!-- 价格设置（仅付费可见和订阅后付费可见时显示） -->
+        <view v-if="form.visibility === 2 || form.visibility === 3" class="price-setting">
           <text class="label">设置价格</text>
           <view class="price-input-wrapper">
             <text class="currency">¥</text>
@@ -160,16 +129,33 @@
           </view>
         </view>
       </view>
+
+      <!-- 底部操作栏 -->
+      <view class="footer-actions" v-if="isEdit">
+        <view class="delete-btn" @click="handleDelete">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="3 6 5 6 21 6"/>
+            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+          </svg>
+          <text>删除笔记</text>
+        </view>
+      </view>
     </scroll-view>
   </view>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useNoteStore } from '@/stores/note'
 import { NOTE_CATEGORIES } from '@/config/api.config'
+import { noteApi } from '@/api/note'
 
 const noteStore = useNoteStore()
+
+// 获取页面参数（编辑模式）
+const page = getCurrentPages()[getCurrentPages().length - 1] as any
+const noteId = ref<number | null>(page.options?.id ? parseInt(page.options.id) : null)
+const isEdit = ref(!!noteId.value)
 
 const form = ref({
   title: '',
@@ -184,6 +170,28 @@ const form = ref({
 const tagInput = ref('')
 const loading = ref(false)
 const categories = NOTE_CATEGORIES
+
+// 如果是编辑模式，加载现有笔记数据
+onMounted(async () => {
+  if (isEdit.value && noteId.value) {
+    try {
+      loading.value = true
+      const note = await noteApi.getById(noteId.value)
+      form.value.title = note.title
+      form.value.content = note.content
+      form.value.coverImage = note.coverImage || ''
+      form.value.categoryId = note.categoryId
+      form.value.tags = note.tags || []
+      form.value.visibility = note.visibility
+      form.value.price = note.price ? String(note.price) : ''
+    } catch (error) {
+      console.error('加载笔记失败:', error)
+      uni.showToast({ title: '加载失败', icon: 'none' })
+    } finally {
+      loading.value = false
+    }
+  }
+})
 
 const chooseCover = () => {
   uni.chooseImage({
@@ -210,7 +218,25 @@ const removeTag = (index: number) => {
   form.value.tags.splice(index, 1)
 }
 
-const handlePublish = async () => {
+// 可见性选项
+const visibilityOptions = [
+  '公开',
+  '仅订阅可见',
+  '仅付费可见',
+  '订阅后付费可见',
+  '仅自己可见'
+]
+
+// 可见性选择改变
+const onVisibilityChange = (e: any) => {
+  form.value.visibility = parseInt(e.detail.value)
+  // 如果不是付费选项，清空价格
+  if (form.value.visibility !== 2 && form.value.visibility !== 3) {
+    form.value.price = ''
+  }
+}
+
+const handleSave = async () => {
   if (!form.value.title.trim()) {
     uni.showToast({ title: '请输入标题', icon: 'none' })
     return
@@ -226,11 +252,6 @@ const handlePublish = async () => {
     return
   }
 
-  if (form.value.visibility === 2 && !form.value.price) {
-    uni.showToast({ title: '请设置价格', icon: 'none' })
-    return
-  }
-
   loading.value = true
 
   try {
@@ -240,25 +261,61 @@ const handlePublish = async () => {
       categoryId: form.value.categoryId,
       visibility: form.value.visibility,
       price: form.value.visibility === 2 ? parseFloat(form.value.price) : 0,
-      tags: form.value.tags
+      tags: form.value.tags,
+      coverImage: form.value.coverImage
     }
 
-    await noteStore.publishNote(noteData)
+    if (isEdit.value && noteId.value) {
+      // 更新现有笔记
+      await noteApi.update(noteId.value, noteData)
+    } else {
+      // 创建新笔记（草稿状态）
+      await noteApi.create(noteData)
+    }
 
     uni.showToast({
-      title: '发布成功',
+      title: '保存成功',
       icon: 'success',
       duration: 2000
     })
 
     setTimeout(() => {
-      uni.switchTab({ url: '/pages/index/index' })
+      // 保存后跳转到"我的笔记"页面
+      uni.navigateTo({ url: '/pages/user/my-notes' })
     }, 1500)
   } catch (error) {
-    console.error('发布失败:', error)
+    console.error('保存失败:', error)
+    uni.showToast({ title: '保存失败', icon: 'none' })
   } finally {
     loading.value = false
   }
+}
+
+const handleDelete = () => {
+  if (!isEdit.value || !noteId.value) {
+    uni.showToast({ title: '新笔记无法删除', icon: 'none' })
+    return
+  }
+
+  uni.showModal({
+    title: '确认删除',
+    content: '确定要删除这篇笔记吗？此操作不可恢复。',
+    confirmColor: '#F44336',
+    success: async (res) => {
+      if (res.confirm) {
+        try {
+          await noteApi.delete(noteId.value!)
+          uni.showToast({ title: '删除成功', icon: 'success' })
+          setTimeout(() => {
+            uni.navigateTo({ url: '/pages/user/my-notes' })
+          }, 1500)
+        } catch (error) {
+          console.error('删除失败:', error)
+          uni.showToast({ title: '删除失败', icon: 'none' })
+        }
+      }
+    }
+  })
 }
 
 const goBack = () => {
@@ -308,7 +365,7 @@ const goBack = () => {
   justify-content: flex-end;
 }
 
-.publish-btn {
+.save-btn {
   padding: 8px 20px;
   background: linear-gradient(135deg, var(--accent-warm), var(--accent-coral));
   color: white;
@@ -317,7 +374,7 @@ const goBack = () => {
   border-radius: 16px;
 }
 
-.publish-btn.loading {
+.save-btn.loading {
   background: var(--text-tertiary);
 }
 
@@ -483,42 +540,27 @@ const goBack = () => {
   display: block;
 }
 
-.visibility-list {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.visibility-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 12px;
+.visibility-select-wrapper {
   background: var(--bg-secondary);
   border-radius: 10px;
   border: 1px solid var(--border-light);
+  overflow: hidden;
 }
 
-.visibility-item.active {
-  border-color: var(--accent-warm);
-  background: #FFF5F2;
+.visibility-picker {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
 }
 
-.visibility-name {
+.picker-label {
   font-size: 15px;
-  font-weight: 600;
   color: var(--text-primary);
-  display: block;
-  margin-bottom: 2px;
 }
 
-.visibility-desc {
-  font-size: 12px;
+.picker-arrow {
   color: var(--text-tertiary);
-}
-
-.check-icon {
-  color: var(--accent-warm);
 }
 
 .price-setting {
@@ -554,5 +596,29 @@ const goBack = () => {
   font-size: 18px;
   font-weight: 600;
   color: var(--text-primary);
+}
+
+/* 底部操作栏 */
+.footer-actions {
+  margin-top: 32px;
+  padding: 20px 0;
+  border-top: 1px solid var(--border-light);
+}
+
+.delete-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 14px;
+  background: #FFEBEE;
+  border-radius: 12px;
+  color: #F44336;
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.delete-btn:active {
+  background: #FFCDD2;
 }
 </style>

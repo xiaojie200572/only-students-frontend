@@ -42,9 +42,10 @@ export const userApi = {
   // 保存登录信息到本地
   saveLoginInfo: (loginRes: LoginResponse) => {
     uni.setStorageSync('token', loginRes.token)
-    uni.setStorageSync('userId', loginRes.userInfo.id)
+    uni.setStorageSync('userId', String(loginRes.userInfo.id))
     uni.setStorageSync('userInfo', loginRes.userInfo)
     uni.setStorageSync('tokenExpire', loginRes.expireTime)
+    console.log('保存登录信息 - userId:', loginRes.userInfo.id, '转换为字符串:', String(loginRes.userInfo.id))
   },
 
   // 清除登录信息

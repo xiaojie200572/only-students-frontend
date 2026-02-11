@@ -1,0 +1,129 @@
+version: '3.8'
+
+services:
+  # Redis 7 (使用现有镜像 latest，加密码)
+  redis:
+    image: redis:latest
+    container_name: only-students-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes --requirepass xiaojie666
+    networks:
+      - only-students-network
+
+  # Nacos (使用现有镜像 v2.3.2，连接物理机MySQL)
+  nacos:
+    image: nacos/nacos-server:v2.3.2
+    container_name: only-students-nacos
+    environment:
+      MODE: standalone
+      SPRING_DATASOURCE_PLATFORM: mysql
+      MYSQL_SERVICE_HOST: host.docker.internal  # 使用宿主机MySQL
+      MYSQL_SERVICE_DB_NAME: nacos
+      MYSQL_SERVICE_PORT: 3306
+      MYSQL_SERVICE_USER: root
+      MYSQL_SERVICE_PASSWORD: xiaojie666
+      # 关闭认证（开发环境）
+      NACOS_AUTH_ENABLE: false
+      NACOS_CORE_AUTH_ENABLED: false
+    ports:
+      - "8848:8848"
+      - "9848:9848"
+    networks:
+      - only-students-network
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  # RabbitMQ (使用现有镜像 3.8.5)
+  rabbitmq:
+    image: rabbitmq:3.8.5-management-alpine
+    container_name: only-students-rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: admin
+      RABBITMQ_DEFAULT_PASS: admin123
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - only-students-network
+
+  # Elasticsearch 7.17 (使用现有镜像)
+  elasticsearch:
+    image: elasticsearch:7.17.23
+    container_name: only-students-es
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ports:
+      - "9200:9200"
+    volumes:
+      - es_data:/usr/share/elasticsearch/data
+    networks:
+      - only-students-network
+
+  # Kibana 7.17 (匹配ES版本)
+  kibana:
+    image: kibana:7.17.23
+    container_name: only-students-kibana
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+    ports:
+      - "5601:5601"
+    depends_on:
+      - elasticsearch
+    networks:
+      - only-students-network
+
+  # MinIO (需要下载)
+  minio:
+    image: minio/minio:latest
+    container_name: only-students-minio
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin123
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+    command: server /data --console-address ":9001"
+    networks:
+      - only-students-network
+
+  # Sentinel Dashboard (可选，使用现有镜像)
+  sentinel:
+    image: bladex/sentinel-dashboard:1.8.6
+    container_name: only-students-sentinel
+    ports:
+      - "8858:8858"
+    networks:
+      - only-students-network
+
+  # Gotenberg (文档转换服务，基于LibreOffice)
+  # 用于将Office文档(doc/docx/xls/xlsx/ppt/pptx)转换为PDF
+  gotenberg:
+    image: gotenberg/gotenberg:8
+    container_name: only-students-gotenberg
+    ports:
+      - "3000:3000"
+    environment:
+      - GOTENBERG_CHROMIUM_DISABLE_JAVASCRIPT=true
+      - GOTENBERG_LIBREOFFICE_AUTO_START=true
+    networks:
+      - only-students-network
+    restart: unless-stopped
+
+volumes:
+  redis_data:
+  rabbitmq_data:
+  es_data:
+  minio_data:
+
+networks:
+  only-students-network:
+    driver: bridge

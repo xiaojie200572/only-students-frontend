@@ -25,7 +25,7 @@ instance.interceptors.request.use(
       config.headers['Authorization'] = `Bearer ${token}`
     }
     if (userId) {
-      config.headers['X-User-Id'] = userId
+      config.headers['X-User-Id'] = String(userId)
     }
 
     return config
