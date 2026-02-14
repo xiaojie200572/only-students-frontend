@@ -19,6 +19,33 @@
 
     <!-- 内容区 -->
     <scroll-view scroll-y class="detail-content" @scrolltolower="loadMoreComments">
+      <!-- 笔记图片展示 -->
+      <view v-if="noteImages && noteImages.length > 0" class="media-carousel" :class="{ blurred: !isVisible }">
+        <!-- 单张图片 -->
+        <view v-if="noteImages.length === 1" class="single-image" @click="isVisible && openFullscreenPreview(0)">
+          <image :src="noteImages[0]" mode="aspectFill" class="media-image"/>
+        </view>
+        <!-- 多张图片使用 swiper -->
+        <swiper 
+          v-else
+          class="media-swiper" 
+          :indicator-dots="true" 
+          :autoplay="false" 
+          :circular="true"
+          indicator-color="rgba(255, 255, 255, 0.4)"
+          indicator-active-color="#fff"
+          @change="onSwiperChange"
+        >
+          <swiper-item 
+            v-for="(img, index) in noteImages" 
+            :key="index"
+            @click="isVisible && openFullscreenPreview(index)"
+          >
+            <image :src="img" mode="aspectFill" class="media-image"/>
+          </swiper-item>
+        </swiper>
+      </view>
+
       <!-- 整个可见区域的马赛克遮罩 -->
       <view v-if="!isVisible" class="full-mosaic-wrapper">
         <view class="full-mosaic-overlay"></view>
@@ -89,28 +116,7 @@
 
       <!-- 可见的情况：正常显示所有内容 -->
       <view v-else>
-        <!-- 笔记主体轮播 -->
-        <view v-if="noteImages.length > 0" class="media-carousel">
-          <swiper 
-            class="media-swiper" 
-            :indicator-dots="true" 
-            :autoplay="false" 
-            :circular="true"
-            indicator-color="rgba(255, 255, 255, 0.4)"
-            indicator-active-color="#fff"
-            @change="onSwiperChange"
-          >
-            <swiper-item 
-              v-for="(img, index) in noteImages" 
-              :key="index"
-              @click="openFullscreenPreview(index)"
-            >
-              <image :src="img" mode="aspectFill" class="media-image"/>
-            </swiper-item>
-          </swiper>
-        </view>
-
-        <!-- 全屏图片预览 -->
+        <!-- 用户信息区域 -->
         <view v-if="showFullscreenPreview" class="fullscreen-preview" @click="closeFullscreenPreview">
           <view class="preview-header">
             <view class="preview-close" @click.stop="closeFullscreenPreview">
@@ -177,6 +183,28 @@
           <view v-if="note.tags && note.tags.length > 0" class="tags-section">
             <view v-for="(tag, index) in note.tags" :key="index" class="tag-item">
               #{{ tag }}
+            </view>
+          </view>
+
+          <!-- 附件列表（非图片） -->
+          <view v-if="noteAttachments.length > 0" class="attachments-section">
+            <text class="attachments-title">附件</text>
+            <view v-for="(att, index) in noteAttachments" :key="index" class="attachment-item" @click="downloadFile(att)">
+              <view class="attachment-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                  <polyline points="14 2 14 8 20 8"/>
+                </svg>
+              </view>
+              <view class="attachment-info">
+                <text class="attachment-name">{{ att.fileName }}</text>
+                <text class="attachment-type">{{ att.fileType?.toUpperCase() || '文件' }}</text>
+              </view>
+              <svg class="download-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="7 10 12 15 17 10"/>
+                <line x1="12" y1="15" x2="12" y2="3"/>
+              </svg>
             </view>
           </view>
 
@@ -378,20 +406,58 @@ const isVisible = computed(() => {
   return true
 })
 
-// 笔记图片列表
+// 笔记图片列表（从 attachments 中提取图片）
 const noteImages = computed(() => {
   if (!note.value) return []
-  const images = []
-  // 如果有coverImage，作为第一张
-  if (note.value.coverImage) {
-    images.push(note.value.coverImage)
+  const images: string[] = []
+  if (note.value.attachments) {
+    try {
+      let attachments = note.value.attachments
+      if (typeof attachments === 'string') {
+        if (!attachments.trim()) return []
+        attachments = JSON.parse(attachments)
+      }
+      if (Array.isArray(attachments)) {
+        attachments.forEach((att: any) => {
+          if (!att) return
+          const type = (att.fileType || '').toLowerCase()
+          if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp'].includes(type)) {
+            images.push(att.fileUrl)
+          }
+        })
+      }
+    } catch (e) {
+      console.error('解析附件失败:', e)
+    }
   }
-  // 如果有图片列表，添加其余图片
-  if (note.value.images && note.value.images.length > 0) {
-    images.push(...note.value.images)
+  return images
+})
+
+// 笔记附件列表（文档等非图片）
+const noteAttachments = computed(() => {
+  if (!note.value) return []
+  if (note.value.attachments) {
+    try {
+      let attachments = note.value.attachments
+      // 如果是字符串，尝试解析
+      if (typeof attachments === 'string') {
+        // 处理可能的空字符串
+        if (!attachments.trim()) return []
+        attachments = JSON.parse(attachments)
+      }
+      // 确保是数组
+      if (Array.isArray(attachments)) {
+        return attachments.filter((att: any) => {
+          if (!att) return false
+          const type = (att.fileType || '').toLowerCase()
+          return !['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp'].includes(type)
+        })
+      }
+    } catch (e) {
+      console.error('解析附件失败:', e, note.value.attachments)
+    }
   }
-  // 去重
-  return [...new Set(images)]
+  return []
 })
 
 // 评论
@@ -708,6 +774,36 @@ const showMoreActions = () => {
   })
 }
 
+// 下载文件
+const downloadFile = (att: any) => {
+  // #ifdef H5
+  window.open(att.fileUrl, '_blank')
+  // #endif
+  
+  // #ifndef H5
+  uni.downloadFile({
+    url: att.fileUrl,
+    success: (res) => {
+      if (res.statusCode === 200) {
+        uni.openDocument({
+          filePath: res.tempFilePath,
+          fileType: att.fileType,
+          success: () => {
+            console.log('打开文档成功')
+          },
+          fail: () => {
+            uni.showToast({ title: '无法打开文件', icon: 'none' })
+          }
+        })
+      }
+    },
+    fail: () => {
+      uni.showToast({ title: '下载失败', icon: 'none' })
+    }
+  })
+  // #endif
+}
+
 const goBack = () => {
   const pages = getCurrentPages()
   
@@ -817,6 +913,16 @@ const formatTime = (time: string) => {
   width: 100%;
   height: 420px;
   background: var(--bg-secondary);
+}
+
+.media-carousel.blurred {
+  filter: blur(8px);
+  opacity: 0.6;
+}
+
+.single-image {
+  width: 100%;
+  height: 100%;
 }
 
 .media-swiper {
@@ -1416,5 +1522,74 @@ const formatTime = (time: string) => {
 .send-btn.active {
   background: var(--accent-warm);
   color: white;
+}
+
+/* 附件区域 */
+.attachments-section {
+  margin: 16px 0;
+  padding: 12px;
+  background: var(--bg-secondary);
+  border-radius: 8px;
+}
+
+.attachments-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+  display: block;
+}
+
+.attachment-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px;
+  background: var(--bg-card);
+  border-radius: 6px;
+  margin-bottom: 8px;
+  cursor: pointer;
+}
+
+.attachment-item:active {
+  opacity: 0.8;
+}
+
+.attachment-icon {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--accent-warm);
+  color: white;
+  border-radius: 6px;
+  flex-shrink: 0;
+}
+
+.attachment-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.attachment-name {
+  font-size: 14px;
+  color: var(--text-primary);
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.attachment-type {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  display: block;
+  margin-top: 2px;
+}
+
+.download-icon {
+  color: var(--text-tertiary);
+  flex-shrink: 0;
 }
 </style>

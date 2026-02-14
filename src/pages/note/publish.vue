@@ -9,35 +9,77 @@
       <text class="nav-title">{{ isEdit ? '编辑笔记' : '创建笔记' }}</text>
       <view class="nav-right">
         <view
-          :class="['save-btn', { loading: loading || uploadingCover }]"
+          :class="['save-btn', { loading: loading || uploadingCount > 0 }]"
           @click="handleSave"
         >
-          <text v-if="!loading && !uploadingCover">保存</text>
+          <text v-if="!loading && uploadingCount === 0">保存</text>
           <view v-else class="btn-spinner"></view>
         </view>
       </view>
     </view>
 
     <scroll-view scroll-y class="content-area">
-      <!-- 封面图 -->
-      <view class="cover-section">
-        <view v-if="!form.coverImage" class="upload-cover" @click="chooseCover">
-          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
-            <circle cx="8.5" cy="8.5" r="1.5"/>
-            <polyline points="21 15 16 10 5 21"/>
-          </svg>
-          <text>添加封面图</text>
-        </view>
-        <view v-else class="cover-wrapper">
-          <image :src="form.coverImage" class="cover-image" mode="aspectFill" @click="chooseCover"/>
-          <!-- 删除封面按钮 -->
-          <view class="delete-cover-btn" @click.stop="removeCover">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5">
-              <line x1="18" y1="6" x2="6" y2="18"/>
-              <line x1="6" y1="6" x2="18" y2="18"/>
-            </svg>
+      <!-- 附件列表（轮播图） -->
+      <view class="attachments-section">
+        <text class="section-label">笔记附件</text>
+        <text class="attachments-hint">支持图片、文档格式（最多20个，总大小不超过20MB）</text>
+        
+        <!-- 附件网格 -->
+        <view class="attachments-grid">
+          <!-- 已上传的附件 -->
+          <view 
+            v-for="(file, index) in form.attachments" 
+            :key="index"
+            class="attachment-item"
+          >
+            <!-- 图片预览 -->
+            <view v-if="isImageFile(file)" class="attachment-image-wrapper">
+              <image :src="file.fileUrl" class="attachment-image" mode="aspectFill" />
+              <view class="attachment-delete" @click.stop="removeAttachment(index)">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5">
+                  <line x1="18" y1="6" x2="6" y2="18"/>
+                  <line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+              </view>
+            </view>
+            <!-- 文档预览 -->
+            <view v-else class="attachment-file-wrapper">
+              <view class="file-icon-large">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                  <polyline points="14 2 14 8 20 8"/>
+                  <line x1="16" y1="13" x2="8" y2="13"/>
+                  <line x1="16" y1="17" x2="8" y2="17"/>
+                  <polyline points="10 9 9 9 8 9"/>
+                </svg>
+              </view>
+              <text class="file-name-small">{{ file.fileName }}</text>
+              <view class="attachment-delete" @click.stop="removeAttachment(index)">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="18" y1="6" x2="6" y2="18"/>
+                  <line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+              </view>
+            </view>
           </view>
+          
+          <!-- 添加按钮 -->
+          <view 
+            v-if="form.attachments.length < 20" 
+            class="attachment-add-btn" 
+            @click="chooseFiles"
+          >
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="12" y1="5" x2="12" y2="19"/>
+              <line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+            <text class="add-text">添加</text>
+          </view>
+        </view>
+        
+        <!-- 上传进度提示 -->
+        <view v-if="uploadingCount > 0" class="uploading-hint">
+          <text>正在上传 {{ uploadingCount }} 个文件...</text>
         </view>
       </view>
 
@@ -62,41 +104,6 @@
           maxlength="500"
         />
         <text class="char-count">{{ form.content.length }}/500</text>
-      </view>
-
-      <!-- 文件上传 -->
-      <view class="input-section file-section">
-        <text class="section-label">上传文件</text>
-        <view v-if="!form.originalFileId" class="upload-file-btn" @click="chooseFile">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-            <polyline points="17 8 12 3 7 8"/>
-            <line x1="12" y1="3" x2="12" y2="15"/>
-          </svg>
-          <text>点击上传文件</text>
-          <text class="file-hint">支持 PDF、Word、PPT 等格式</text>
-        </view>
-        <view v-else class="file-info">
-          <view class="file-icon">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-              <polyline points="14 2 14 8 20 8"/>
-              <line x1="16" y1="13" x2="8" y2="13"/>
-              <line x1="16" y1="17" x2="8" y2="17"/>
-              <polyline points="10 9 9 9 8 9"/>
-            </svg>
-          </view>
-          <view class="file-details">
-            <text class="file-name">{{ uploadedFileName }}</text>
-            <text class="file-size">{{ uploadedFileSize }}</text>
-          </view>
-          <view class="remove-file" @click="removeFile">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <line x1="18" y1="6" x2="6" y2="18"/>
-              <line x1="6" y1="6" x2="18" y2="18"/>
-            </svg>
-          </view>
-        </view>
       </view>
 
       <!-- 分类 -->
@@ -194,6 +201,7 @@ import { useNoteStore } from '@/stores/note'
 import { NOTE_CATEGORIES } from '@/config/api.config'
 import { noteApi } from '@/api/note'
 import { useUserStore } from '@/stores/user'
+import { API_BASE_URL } from '@/config/api.config'
 import { uploadPrivateFile, uploadPublicFile } from '@/api/file'
 
 const noteStore = useNoteStore()
@@ -206,17 +214,31 @@ const isEdit = ref(!!noteId.value)
 const form = ref({
   title: '',
   content: '',
-  coverImage: '',
   categoryId: null as number | null,
   tags: [] as string[],
   visibility: 0,
   price: '',
-  originalFileId: null as number | null
+  attachments: [] as any[]
 })
 
-// 已上传文件信息
-const uploadedFileName = ref('')
-const uploadedFileSize = ref('')
+// 附件上传中状态
+const uploadingCount = ref(0)
+
+// 判断附件是否为图片
+const isImageFile = (file: any) => {
+  const type = (file.fileType || file.name || '').toLowerCase()
+  return ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp'].some(t => type.includes(t))
+}
+
+// 获取文件图标
+const getFileIcon = (fileType: string) => {
+  if (isImageFile(fileType)) return 'image'
+  if (fileType?.includes('pdf')) return 'pdf'
+  if (fileType?.includes('doc')) return 'word'
+  if (fileType?.includes('xls')) return 'excel'
+  if (fileType?.includes('ppt')) return 'ppt'
+  return 'file'
+}
 
 const tagInput = ref('')
 const loading = ref(false)
@@ -224,25 +246,34 @@ const categories = NOTE_CATEGORIES
 
 // 如果是编辑模式，加载现有笔记数据
 onMounted(async () => {
+  // 保存来源页面（用于刷新后返回）
+  const pages = getCurrentPages()
+  if (pages.length > 1) {
+    const refererPage = pages[pages.length - 2]
+    uni.setStorageSync('publish_referer', '/' + refererPage.route)
+  }
+  
   if (isEdit.value && noteId.value) {
     try {
       loading.value = true
       const note = await noteApi.getById(noteId.value)
       form.value.title = note.title
       form.value.content = note.content
-      form.value.coverImage = note.coverImage || ''
       form.value.categoryId = note.categoryId
       form.value.tags = note.tags || []
       form.value.visibility = note.visibility
       form.value.price = note.price ? String(note.price) : ''
       
-      // 加载文件信息
-      if (note.originalFileId) {
-        form.value.originalFileId = note.originalFileId
-        // 如果有文件信息，从note中获取文件名
-        if (note.fileName) {
-          uploadedFileName.value = note.fileName
-          uploadedFileSize.value = note.fileSize ? formatFileSize(note.fileSize) : ''
+      // 加载附件列表
+      if (note.attachments) {
+        try {
+          const attachments = typeof note.attachments === 'string' 
+            ? JSON.parse(note.attachments) 
+            : note.attachments
+          form.value.attachments = attachments || []
+        } catch (e) {
+          console.error('解析附件失败:', e)
+          form.value.attachments = []
         }
       }
     } catch (error) {
@@ -254,116 +285,204 @@ onMounted(async () => {
   }
 })
 
-const uploadingCover = ref(false)
-
-const chooseCover = async () => {
-  try {
-    // 选择图片
-    const res = await uni.chooseImage({ count: 1 });
-    const tempFilePath = res.tempFilePaths[0];
-    
-    // 显示上传中
-    uploadingCover.value = true
-    uni.showLoading({ title: '上传中...', mask: true });
-    
-    // 上传图片到服务器
-    const result = await uploadPublicFile(tempFilePath);
-    
-    // 添加时间戳参数防止缓存，并确保MinIO已完成写入
-    const timestamp = Date.now();
-    const imageUrl = result.fileUrl.includes('?') 
-      ? `${result.fileUrl}&t=${timestamp}` 
-      : `${result.fileUrl}?t=${timestamp}`;
-    
-    // 预加载图片确保可用
-    await preloadImage(imageUrl);
-    
-    // 保存返回的URL
-    form.value.coverImage = imageUrl;
-    
-    uni.showToast({ title: '上传成功', icon: 'success' });
-  } catch (error) {
-    console.error('封面上传失败:', error);
-    uni.showToast({ title: '上传失败', icon: 'none' });
-  } finally {
-    uploadingCover.value = false
-    uni.hideLoading();
-  }
-}
-
-// 删除封面
-const removeCover = () => {
+// 移除附件
+const removeAttachment = (index: number) => {
   uni.showModal({
-    title: '删除封面',
-    content: '确定要删除当前封面吗？',
+    title: '确认删除',
+    content: '确定要删除这个附件吗？',
     confirmColor: '#F44336',
     success: (res) => {
       if (res.confirm) {
-        form.value.coverImage = ''
+        form.value.attachments.splice(index, 1)
         uni.showToast({ title: '已删除', icon: 'success' })
       }
     }
   })
 }
 
-// 预加载图片确保可用
-const preloadImage = (url: string): Promise<void> => {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.onload = () => resolve();
-    img.onerror = () => reject(new Error('图片加载失败'));
-    img.src = url;
-  });
+// 检查文件大小限制（5MB）
+const checkFileSize = (size: number): boolean => {
+  const maxSize = 5 * 1024 * 1024 // 5MB
+  if (size > maxSize) {
+    uni.showToast({ title: '单个文件不能超过5MB', icon: 'none' })
+    return false
+  }
+  return true
 }
 
-// 选择并上传文件
-const chooseFile = () => {
-  uni.chooseMessageFile({
-    count: 1,
-    type: 'file',
-    extension: ['.pdf', '.doc', '.docx', '.ppt', '.pptx', '.xls', '.xlsx', '.txt', '.md'],
-    success: async (res) => {
-      const file = res.tempFiles[0]
-      
-      // 显示上传中
-      uni.showLoading({ title: '上传中...', mask: true })
-      
-      try {
-        // 上传文件到服务器
-        const result = await uploadPrivateFile(file.path)
-        
-        // 保存文件信息
-        form.value.originalFileId = result.fileId
-        uploadedFileName.value = result.originalName || result.fileName
-        uploadedFileSize.value = formatFileSize(result.fileSize)
-        
-        uni.showToast({ title: '上传成功', icon: 'success' })
-      } catch (error) {
-        console.error('文件上传失败:', error)
-        uni.showToast({ title: '上传失败', icon: 'none' })
-      } finally {
-        uni.hideLoading()
+// 检查总大小限制（20MB）
+const checkTotalSize = (): boolean => {
+  const totalSize = form.value.attachments.reduce((sum, file) => sum + (file.fileSize || 0), 0)
+  const maxTotal = 20 * 1024 * 1024 // 20MB
+  if (totalSize > maxTotal) {
+    uni.showToast({ title: '总大小不能超过20MB', icon: 'none' })
+    return false
+  }
+  return true
+}
+
+// 选择多个文件
+const chooseFiles = async () => {
+  if (form.value.attachments.length >= 20) {
+    uni.showToast({ title: '最多支持20个附件', icon: 'none' })
+    return
+  }
+
+  try {
+    // #ifdef H5
+    uni.chooseFile({
+      count: Math.min(20 - form.value.attachments.length, 5), // 每次最多选5个
+      type: 'file',
+      extension: ['pdf', 'doc', 'docx', 'ppt', 'pptx', 'xls', 'xlsx', 'txt', 'md', 'json', 'xml', 'csv', 'jpg', 'jpeg', 'png', 'gif', 'webp'],
+      success: async (res: any) => {
+        const files = res.tempFiles || []
+        await uploadFiles(files)
       }
-    },
-    fail: (err) => {
-      console.error('选择文件失败:', err)
+    })
+    // #endif
+
+    // #ifndef H5
+    uni.chooseMessageFile({
+      count: Math.min(20 - form.value.attachments.length, 5),
+      type: 'file',
+      extension: ['pdf', 'doc', 'docx', 'ppt', 'pptx', 'xls', 'xlsx', 'txt', 'md', 'json', 'xml', 'csv', 'jpg', 'jpeg', 'png', 'gif', 'webp'],
+      success: async (res: any) => {
+        const files = res.tempFiles || []
+        await uploadFiles(files)
+      }
+    })
+    // #endif
+  } catch (error) {
+    console.error('选择文件失败:', error)
+  }
+}
+
+// 上传多个文件
+const uploadFiles = async (files: any[]) => {
+  const validFiles = files.filter(file => {
+    const size = file.size || 0
+    return checkFileSize(size)
+  })
+  
+  if (validFiles.length === 0) return
+
+  uploadingCount.value = validFiles.length
+  
+  for (const file of validFiles) {
+    if (form.value.attachments.length >= 20) {
+      uni.showToast({ title: '已达到最大附件数', icon: 'none' })
+      break
     }
+    
+    try {
+      let result: any
+      
+      // #ifdef H5
+      const rawFile = file.raw || file
+      result = await uploadFileH5(rawFile)
+      // #endif
+      
+      // #ifndef H5
+      result = await uploadPrivateFile(file.path)
+      // #endif
+      
+      form.value.attachments.push({
+        fileId: result.fileId,
+        fileName: result.originalName || result.fileName,
+        fileType: result.fileType,
+        fileSize: result.fileSize,
+        fileUrl: result.fileUrl
+      })
+    } catch (error) {
+      console.error('文件上传失败:', error)
+      uni.showToast({ title: `${file.name || '文件'}上传失败`, icon: 'none' })
+    } finally {
+      uploadingCount.value--
+    }
+  }
+  
+  if (uploadingCount.value === 0) {
+    uni.showToast({ title: '上传完成', icon: 'success' })
+  }
+}
+
+// H5 上传文件
+const uploadFileH5 = (file: any): Promise<any> => {
+  return new Promise((resolve, reject) => {
+    const token = uni.getStorageSync('token')
+    const userId = uni.getStorageSync('userId')
+    
+    const formData = new FormData()
+    formData.append('file', file)
+    formData.append('category', 'PRIVATE')
+    
+    const xhr = new XMLHttpRequest()
+    xhr.open('POST', `${API_BASE_URL}/file/upload`, true)
+    
+    if (token) {
+      xhr.setRequestHeader('Authorization', `Bearer ${token}`)
+    }
+    if (userId) {
+      xhr.setRequestHeader('X-User-Id', String(userId))
+    }
+    
+    xhr.onload = function() {
+      if (xhr.status === 200) {
+        const data = JSON.parse(xhr.responseText)
+        if (data.code === 200) {
+          resolve(data.data)
+        } else {
+          reject(data)
+        }
+      } else {
+        reject(xhr.responseText)
+      }
+    }
+    
+    xhr.onerror = reject
+    xhr.send(formData)
   })
 }
-
-// 移除已上传的文件
-const removeFile = () => {
-  uni.showModal({
-    title: '确认移除',
-    content: '确定要移除已上传的文件吗？',
-    success: (res) => {
-      if (res.confirm) {
-        form.value.originalFileId = null
-        uploadedFileName.value = ''
-        uploadedFileSize.value = ''
-        uni.showToast({ title: '已移除', icon: 'success' })
+const uploadPrivateFileH5 = (file: any): Promise<any> => {
+  return new Promise((resolve, reject) => {
+    const token = uni.getStorageSync('token')
+    const userId = uni.getStorageSync('userId')
+    
+    const formData = new FormData()
+    formData.append('file', file.raw || file)
+    formData.append('category', 'PRIVATE')
+    
+    const xhr = new XMLHttpRequest()
+    xhr.open('POST', `${API_BASE_URL}/file/upload`, true)
+    
+    if (token) {
+      xhr.setRequestHeader('Authorization', `Bearer ${token}`)
+    }
+    if (userId) {
+      xhr.setRequestHeader('X-User-Id', String(userId))
+    }
+    
+    xhr.onload = function() {
+      if (xhr.status === 200) {
+        const data = JSON.parse(xhr.responseText)
+        if (data.code === 200) {
+          resolve(data.data)
+        } else {
+          uni.showToast({ title: data.message || '上传失败', icon: 'none' })
+          reject(data)
+        }
+      } else {
+        uni.showToast({ title: '上传失败', icon: 'none' })
+        reject(xhr.responseText)
       }
     }
+    
+    xhr.onerror = function(err) {
+      console.error('上传失败:', err)
+      reject(err)
+    }
+    
+    xhr.send(formData)
   })
 }
 
@@ -410,8 +529,8 @@ const onVisibilityChange = (e: any) => {
 }
 
 const handleSave = async () => {
-  if (uploadingCover.value) {
-    uni.showToast({ title: '封面上传中，请稍候...', icon: 'none' })
+  if (uploadingCount.value > 0) {
+    uni.showToast({ title: '文件上传中，请稍候...', icon: 'none' })
     return
   }
 
@@ -440,8 +559,7 @@ const handleSave = async () => {
       visibility: form.value.visibility,
       price: (form.value.visibility === 2 || form.value.visibility === 3) ? (parseFloat(form.value.price) || 0) : 0,
       tags: form.value.tags,
-      coverImage: form.value.coverImage,
-      originalFileId: form.value.originalFileId,
+      attachments: form.value.attachments.length > 0 ? JSON.stringify(form.value.attachments) : null,
       authorNickname: userStore.userInfo?.nickname,
       authorUsername: userStore.userInfo?.username,
       authorAvatar: userStore.userInfo?.avatar,
@@ -507,7 +625,18 @@ const handleDelete = () => {
 }
 
 const goBack = () => {
-  uni.navigateBack()
+  const pages = getCurrentPages()
+  
+  if (pages.length > 1) {
+    uni.navigateBack({ delta: 1 })
+  } else {
+    const referer = uni.getStorageSync('publish_referer')
+    if (referer) {
+      uni.reLaunch({ url: referer })
+    } else {
+      uni.switchTab({ url: '/pages/index/index' })
+    }
+  }
 }
 </script>
 
@@ -584,29 +713,103 @@ const goBack = () => {
   padding: 16px;
 }
 
-.cover-section {
+.attachments-section {
   margin-bottom: 16px;
 }
 
-.upload-cover {
-  width: 100%;
-  height: 200px;
+.attachments-hint {
+  font-size: 12px;
+  color: var(--text-tertiary);
+  margin-bottom: 12px;
+  display: block;
+}
+
+.attachments-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  gap: 12px;
+}
+
+.attachment-item {
+  position: relative;
+  aspect-ratio: 1;
+  border-radius: 8px;
+  overflow: hidden;
   background: var(--bg-secondary);
+}
+
+.attachment-image-wrapper {
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+.attachment-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.attachment-file-wrapper {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+}
+
+.file-icon-large {
+  color: var(--text-secondary);
+  margin-bottom: 4px;
+}
+
+.file-name-small {
+  font-size: 10px;
+  color: var(--text-secondary);
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+.attachment-delete {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 20px;
+  height: 20px;
+  background: rgba(0, 0, 0, 0.5);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.attachment-add-btn {
+  aspect-ratio: 1;
   border: 2px dashed var(--border-medium);
-  border-radius: 12px;
+  border-radius: 8px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   color: var(--text-tertiary);
-  gap: 8px;
+  cursor: pointer;
 }
 
-.cover-image {
-  width: 100%;
-  height: 200px;
-  border-radius: 12px;
-  object-fit: cover;
+.add-text {
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+.uploading-hint {
+  margin-top: 8px;
+  font-size: 12px;
+  color: var(--accent-warm);
 }
 
 .cover-wrapper {
@@ -670,88 +873,12 @@ const goBack = () => {
   color: var(--text-tertiary);
 }
 
-/* 文件上传区域 */
-.file-section {
-  margin-top: 12px;
-}
-
 .section-label {
   font-size: 14px;
   font-weight: 600;
   color: var(--text-primary);
   margin-bottom: 10px;
   display: block;
-}
-
-.upload-file-btn {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 24px;
-  background: var(--bg-secondary);
-  border: 2px dashed var(--border-medium);
-  border-radius: 10px;
-  color: var(--text-tertiary);
-  gap: 6px;
-}
-
-.upload-file-btn:active {
-  background: var(--border-light);
-}
-
-.file-hint {
-  font-size: 11px;
-  color: var(--text-tertiary);
-}
-
-.file-info {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px;
-  background: var(--bg-secondary);
-  border-radius: 10px;
-}
-
-.file-icon {
-  width: 40px;
-  height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--accent-warm);
-  color: white;
-  border-radius: 8px;
-}
-
-.file-details {
-  flex: 1;
-}
-
-.file-name {
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--text-primary);
-  display: block;
-  margin-bottom: 2px;
-  word-break: break-all;
-}
-
-.file-size {
-  font-size: 12px;
-  color: var(--text-tertiary);
-}
-
-.remove-file {
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--text-tertiary);
-  background: var(--bg-card);
-  border-radius: 50%;
 }
 
 .section {

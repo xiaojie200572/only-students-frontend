@@ -84,6 +84,7 @@ export interface Note {
   favoriteCount: number
   commentCount: number
   shareCount: number
+  attachments?: any[] | string
   hotScore?: number
   educationLevel?: number
   schoolId?: number
