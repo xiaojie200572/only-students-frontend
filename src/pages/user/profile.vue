@@ -51,27 +51,12 @@
           <!-- 操作按钮 -->
           <view class="action-buttons">
             <view v-if="!isSelf" :class="['subscribe-btn', { subscribed: isSubscribed }]" @click="toggleSubscribe">
-              <text v-if="!isSubscribed">
-                <text v-if="subscriptionConfig">¥{{ subscriptionConfig.price }}/月 订阅</text>
-                <text v-else>订阅</text>
-              </text>
+              <text v-if="!isSubscribed">订阅</text>
               <text v-else>已订阅</text>
             </view>
             <view v-if="!isSelf" class="message-btn" @click="sendMessage">
               <text>私信</text>
             </view>
-          </view>
-        </view>
-
-        <!-- 订阅配置 -->
-        <view v-if="subscriptionConfig && !isSelf && !isSubscribed" class="subscription-card">
-          <view class="subscription-header">
-            <text class="subscription-title">订阅服务</text>
-            <text class="subscription-price">¥{{ subscriptionConfig.price }}/月</text>
-          </view>
-          <text v-if="subscriptionConfig.description" class="subscription-desc">{{ subscriptionConfig.description }}</text>
-          <view class="subscription-btn" @click="subscribe">
-            立即订阅
           </view>
         </view>
 
@@ -125,7 +110,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useUserStore } from '@/stores/user'
-import { get, post } from '@/api'
+import { get, post, del } from '@/api'
 import type { UserInfo } from '@/types/api.types'
 
 const userStore = useUserStore()
@@ -137,7 +122,6 @@ const stats = ref({
   subscriberCount: 0,
   likeCount: 0
 })
-const subscriptionConfig = ref<any>(null)
 const isSubscribed = ref(false)
 const loading = ref(false)
 
@@ -163,16 +147,14 @@ const loadCreatorData = async () => {
 
   try {
     // 并行获取数据
-    const [userRes, notesRes, configRes, checkRes] = await Promise.all([
+    const [userRes, notesRes, checkRes] = await Promise.all([
       get<UserInfo>(`/user/${creatorId.value}`),
       get<any[]>(`/note/user/${creatorId.value}`),
-      get(`/subscription/config/${creatorId.value}`).catch(() => null),
       get(`/subscription/check/${creatorId.value}`).catch(() => false)
     ])
 
     creator.value = userRes
     notes.value = notesRes
-    subscriptionConfig.value = configRes
     isSubscribed.value = checkRes
 
     // 计算统计数据
@@ -211,7 +193,7 @@ const toggleSubscribe = async () => {
       success: async (res) => {
         if (res.confirm) {
           try {
-            await post(`/subscription/unsubscribe/${creatorId.value}`)
+            await del(`/subscription/${creatorId.value}`)
             isSubscribed.value = false
             stats.value.subscriberCount--
             uni.showToast({ title: '已取消订阅', icon: 'success' })
@@ -448,49 +430,6 @@ const goBack = () => {
   font-weight: 600;
   border-radius: 24px;
   border: 1px solid var(--border-light);
-}
-
-.subscription-card {
-  margin: 16px;
-  background: linear-gradient(135deg, var(--accent-warm), var(--accent-coral));
-  border-radius: 16px;
-  padding: 20px;
-  color: white;
-}
-
-.subscription-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 8px;
-}
-
-.subscription-title {
-  font-size: 16px;
-  font-weight: 600;
-}
-
-.subscription-price {
-  font-size: 20px;
-  font-weight: 700;
-}
-
-.subscription-desc {
-  font-size: 13px;
-  opacity: 0.9;
-  margin-bottom: 16px;
-  display: block;
-}
-
-.subscription-btn {
-  width: 100%;
-  padding: 12px 20px;
-  background: white;
-  color: var(--accent-warm);
-  font-size: 15px;
-  font-weight: 600;
-  border-radius: 24px;
-  text-align: center;
 }
 
 .notes-section {

@@ -373,6 +373,7 @@
 import { ref, onMounted, computed } from 'vue'
 import { noteApi, favoriteApi, ratingApi, shareApi, commentApi } from '@/api/note'
 import { subscriptionApi, paymentApi } from '@/api/message'
+import { getFilePreviewUrl } from '@/api/file'
 import { useUserStore } from '@/stores/user'
 import type { Note } from '@/types/api.types'
 
@@ -380,6 +381,7 @@ const userStore = useUserStore()
 
 const noteId = ref<number>(0)
 const note = ref<Note | null>(null)
+const previewUrls = ref<Record<number, string>>({})
 const hasPurchased = ref(false)
 const isPurchased = ref(false)
 const myRating = ref(0)
@@ -422,7 +424,11 @@ const noteImages = computed(() => {
           if (!att) return
           const type = (att.fileType || '').toLowerCase()
           if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp'].includes(type)) {
-            images.push(att.fileUrl)
+            // 优先使用预览URL，否则使用原始fileUrl
+            const url = att.fileId && previewUrls.value[att.fileId] 
+              ? previewUrls.value[att.fileId] 
+              : att.fileUrl
+            images.push(url)
           }
         })
       }
@@ -450,7 +456,14 @@ const noteAttachments = computed(() => {
         return attachments.filter((att: any) => {
           if (!att) return false
           const type = (att.fileType || '').toLowerCase()
-          return !['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp'].includes(type)
+          if (!['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp'].includes(type)) {
+            // 添加预览URL
+            att.previewUrl = att.fileId && previewUrls.value[att.fileId] 
+              ? previewUrls.value[att.fileId] 
+              : att.fileUrl
+            return true
+          }
+          return false
         })
       }
     } catch (e) {
@@ -517,10 +530,45 @@ const loadNoteDetail = async () => {
   try {
     note.value = await noteApi.getById(noteId.value)
 
+    // 加载附件的预览URL
+    await loadPreviewUrls()
+
     // 笔记加载完成后再检查互动状态
     checkInteractions()
   } catch (error) {
     uni.showToast({ title: '加载失败', icon: 'none' })
+  }
+}
+
+const loadPreviewUrls = async () => {
+  if (!note.value?.attachments) return
+  
+  try {
+    let attachments = note.value.attachments
+    if (typeof attachments === 'string') {
+      attachments = JSON.parse(attachments)
+    }
+    
+    if (Array.isArray(attachments)) {
+      const urlPromises = attachments
+        .filter((att: any) => att?.fileId)
+        .map(async (att: any) => {
+          try {
+            const previewUrl = await getFilePreviewUrl(att.fileId)
+            return { fileId: att.fileId, url: previewUrl }
+          } catch (e) {
+            console.error('获取预览URL失败:', att.fileId, e)
+            return { fileId: att.fileId, url: att.fileUrl }
+          }
+        })
+      
+      const results = await Promise.all(urlPromises)
+      results.forEach((item) => {
+        previewUrls.value[item.fileId] = item.url
+      })
+    }
+  } catch (e) {
+    console.error('解析附件失败:', e)
   }
 }
 
@@ -776,13 +824,14 @@ const showMoreActions = () => {
 
 // 下载文件
 const downloadFile = (att: any) => {
+  const url = att.previewUrl || att.fileUrl
   // #ifdef H5
-  window.open(att.fileUrl, '_blank')
+  window.open(url, '_blank')
   // #endif
   
   // #ifndef H5
   uni.downloadFile({
-    url: att.fileUrl,
+    url: url,
     success: (res) => {
       if (res.statusCode === 200) {
         uni.openDocument({

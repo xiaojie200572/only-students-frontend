@@ -56,3 +56,60 @@ export const uploadPublicFile = (filePath: string): Promise<FileUploadResult> =>
 export const uploadPrivateFile = (filePath: string): Promise<FileUploadResult> => {
   return uploadFile(filePath, '/file/upload', 'PRIVATE')
 }
+
+// 上传笔记附件（根据笔记可见性上传到不同目录）
+export const uploadNoteFile = (filePath: string, visibility: number): Promise<FileUploadResult> => {
+  return new Promise((resolve, reject) => {
+    const token = uni.getStorageSync('token')
+    const userId = uni.getStorageSync('userId')
+
+    const header: Record<string, string> = {}
+
+    if (token) header['Authorization'] = `Bearer ${token}`
+    if (userId) header['X-User-Id'] = String(userId)
+
+    uni.uploadFile({
+      url: `${API_BASE_URL}/file/upload-for-note?visibility=${visibility}`,
+      filePath,
+      name: 'file',
+      header,
+      success: (res: any) => {
+        try {
+          const data = JSON.parse(res.data)
+          if (data.code === 200) {
+            resolve(data.data)
+          } else {
+            uni.showToast({ title: data.message || '上传失败', icon: 'none' })
+            reject(data)
+          }
+        } catch (e) {
+          reject(e)
+        }
+      },
+      fail: reject
+    })
+  })
+}
+
+// 获取文件预览URL
+export const getFilePreviewUrl = (fileId: number): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const token = uni.getStorageSync('token')
+    const header: Record<string, string> = {}
+    if (token) header['Authorization'] = `Bearer ${token}`
+
+    uni.request({
+      url: `${API_BASE_URL}/file/preview/${fileId}`,
+      method: 'GET',
+      header,
+      success: (res: any) => {
+        if (res.data.code === 200) {
+          resolve(res.data.data)
+        } else {
+          reject(new Error(res.data.message || '获取预览链接失败'))
+        }
+      },
+      fail: reject
+    })
+  })
+}

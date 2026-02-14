@@ -202,7 +202,7 @@ import { NOTE_CATEGORIES } from '@/config/api.config'
 import { noteApi } from '@/api/note'
 import { useUserStore } from '@/stores/user'
 import { API_BASE_URL } from '@/config/api.config'
-import { uploadPrivateFile, uploadPublicFile } from '@/api/file'
+import { uploadPrivateFile, uploadNoteFile } from '@/api/file'
 
 const noteStore = useNoteStore()
 const userStore = useUserStore()
@@ -379,11 +379,11 @@ const uploadFiles = async (files: any[]) => {
       
       // #ifdef H5
       const rawFile = file.raw || file
-      result = await uploadFileH5(rawFile)
+      result = await uploadNoteFileH5(rawFile, form.value.visibility)
       // #endif
       
       // #ifndef H5
-      result = await uploadPrivateFile(file.path)
+      result = await uploadNoteFile(file.path, form.value.visibility)
       // #endif
       
       form.value.attachments.push({
@@ -407,17 +407,16 @@ const uploadFiles = async (files: any[]) => {
 }
 
 // H5 上传文件
-const uploadFileH5 = (file: any): Promise<any> => {
+const uploadNoteFileH5 = (file: any, visibility: number): Promise<any> => {
   return new Promise((resolve, reject) => {
     const token = uni.getStorageSync('token')
     const userId = uni.getStorageSync('userId')
     
     const formData = new FormData()
     formData.append('file', file)
-    formData.append('category', 'PRIVATE')
     
     const xhr = new XMLHttpRequest()
-    xhr.open('POST', `${API_BASE_URL}/file/upload`, true)
+    xhr.open('POST', `${API_BASE_URL}/file/upload-for-note?visibility=${visibility}`, true)
     
     if (token) {
       xhr.setRequestHeader('Authorization', `Bearer ${token}`)
