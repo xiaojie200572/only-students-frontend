@@ -47,10 +47,11 @@
   --text-tertiary: #7A7266;
   --text-inverse: #0F1419;
 
-  --accent-warm: #FF9F7A;
-  --accent-coral: #FFB8A0;
-  --accent-gold: #E8C9A0;
-  --accent-olive: #A8B88A;
+  /* 强调色与白天模式保持一致 */
+  --accent-warm: #E07B54;
+  --accent-coral: #FF8B6B;
+  --accent-gold: #D4A574;
+  --accent-olive: #8B9A6D;
 
   --border-light: #2D343C;
   --border-medium: #3D454F;

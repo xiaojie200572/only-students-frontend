@@ -26,12 +26,34 @@
           class="favorite-item"
           @click="goToNote(item.noteId)"
         >
-          <image v-if="item.coverImage" :src="item.coverImage" class="note-cover" mode="aspectFill"/>
-          <view class="note-info">
-            <text class="note-title">{{ item.title }}</text>
+          <view class="note-content">
+            <text class="note-title">{{ item.title || '无标题' }}</text>
+            
             <view class="note-meta">
-              <text class="author">{{ item.authorName }}</text>
-              <text class="time">{{ formatTime(item.createdAt) }}</text>
+              <view class="note-author">
+                <image
+                  v-if="item.authorAvatar"
+                  :src="item.authorAvatar"
+                  class="author-avatar"
+                  mode="aspectFill"
+                />
+                <text class="author-name">{{ item.authorNickname }}</text>
+              </view>
+              <view class="note-stats">
+                <view class="stat-item">
+                  <svg class="stat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                    <circle cx="12" cy="12" r="3"/>
+                  </svg>
+                  <text>{{ formatNumber(item.viewCount || 0) }}</text>
+                </view>
+                <view class="stat-item">
+                  <svg class="stat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
+                  </svg>
+                  <text>{{ formatNumber(item.favoriteCount || 0) }}</text>
+                </view>
+              </view>
             </view>
           </view>
           <view class="favorite-btn" @click.stop="cancelFavorite(item.noteId)">
@@ -51,6 +73,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { get } from '@/api'
+import { favoriteApi } from '@/api/note'
 import TabBar from '@/components/TabBar.vue'
 
 const favorites = ref<any[]>([])
@@ -64,6 +87,7 @@ const loadFavorites = async () => {
   loading.value = true
   try {
     const res = await get<any[]>('/favorite/my')
+    console.log('收藏列表:', res)
     favorites.value = res
   } catch (error) {
     console.error('获取收藏列表失败:', error)
@@ -76,6 +100,16 @@ const loadFavorites = async () => {
 const formatTime = (time: string): string => {
   const date = new Date(time)
   return `${date.getFullYear()}.${String(date.getMonth() + 1).padStart(2, '0')}.${String(date.getDate()).padStart(2, '0')}`
+}
+
+// 格式化数字（超过1000显示为1k）
+const formatNumber = (num: number): string => {
+  if (num >= 10000) {
+    return (num / 10000).toFixed(1) + 'w'
+  } else if (num >= 1000) {
+    return (num / 1000).toFixed(1) + 'k'
+  }
+  return num.toString()
 }
 
 const goBack = () => {
@@ -97,7 +131,7 @@ const cancelFavorite = (noteId: number) => {
     success: async (res) => {
       if (res.confirm) {
         try {
-          await get(`/favorite/unfavorite/${noteId}`)
+          await favoriteApi.remove(noteId)
           favorites.value = favorites.value.filter(item => item.noteId !== noteId)
           uni.showToast({ title: '已取消收藏', icon: 'success' })
         } catch (error) {
@@ -203,37 +237,37 @@ const cancelFavorite = (noteId: number) => {
 }
 
 .favorites-list {
-  padding: 16px;
+  padding: 12px;
 }
 
 .favorite-item {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
+  justify-content: space-between;
   background: var(--bg-card);
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   padding: 12px;
   margin-bottom: 12px;
-  border: 1px solid var(--border-light);
+  box-shadow: var(--shadow-soft);
+  transition: all var(--transition-medium);
 }
 
-.note-cover {
-  width: 80px;
-  height: 80px;
-  border-radius: 8px;
-  margin-right: 12px;
-  object-fit: cover;
+.favorite-item:active {
+  transform: scale(0.98);
 }
 
-.note-info {
+.note-content {
   flex: 1;
   min-width: 0;
+  margin-right: 12px;
 }
 
 .note-title {
   font-size: 15px;
   font-weight: 600;
   color: var(--text-primary);
-  margin-bottom: 8px;
+  line-height: 1.5;
+  margin-bottom: 10px;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
@@ -242,17 +276,57 @@ const cancelFavorite = (noteId: number) => {
 
 .note-meta {
   display: flex;
-  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 10px;
+  border-top: 1px solid var(--border-light);
+}
+
+.note-author {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.author-avatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.author-name {
   font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.note-stats {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.stat-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
   color: var(--text-tertiary);
 }
 
+.stat-icon {
+  width: 14px;
+  height: 14px;
+}
+
 .favorite-btn {
-  width: 40px;
-  height: 40px;
+  width: 36px;
+  height: 36px;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-left: 8px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--bg-primary);
 }
 </style>

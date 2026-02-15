@@ -20,10 +20,17 @@
       <!-- 分类标签 -->
       <view class="category-tag">{{ note.categoryName }}</view>
 
-      <!-- 价格标签 -->
-      <view :class="['price-tag', { free: note.isFree }]">
-        <text v-if="note.isFree">免费</text>
-        <text v-else>¥{{ note.price }}</text>
+      <!-- 评分标签 -->
+      <view v-if="note.averageRating !== undefined && note.averageRating !== null" class="rating-tag">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="#FFD700" stroke="#FFD700" stroke-width="2">
+          <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+        </svg>
+        <text>{{ note.averageRating.toFixed(1) }}</text>
+      </view>
+
+      <!-- 封面底部显示tag -->
+      <view v-if="note.tags && note.tags.length > 0" class="cover-tags">
+        <text v-for="(tag, index) in note.tags.slice(0, 3)" :key="index" class="cover-tag">#{{ tag }}</text>
       </view>
     </view>
 
@@ -55,9 +62,9 @@
 
           <view class="stat-item">
             <svg class="stat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+              <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
             </svg>
-            <text>{{ formatNumber(note.likeCount) }}</text>
+            <text>{{ formatNumber(note.favoriteCount || 0) }}</text>
           </view>
         </view>
       </view>
@@ -213,7 +220,7 @@ const formatNumber = (num: number): string => {
   height: 14px;
 }
 
-.price-tag {
+.rating-tag {
   position: absolute;
   top: 8px;
   right: 8px;
@@ -224,11 +231,31 @@ const formatNumber = (num: number): string => {
   font-weight: 600;
   padding: 4px 8px;
   border-radius: 12px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 
-.price-tag.free {
-  background: var(--accent-olive);
-  color: white;
+.cover-tags {
+  position: absolute;
+  bottom: 8px;
+  left: 8px;
+  right: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  overflow: hidden;
+}
+
+.cover-tag {
+  color: var(--accent-warm);
+  font-size: 11px;
+  font-weight: 700;
+  text-shadow: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
 }
 
 .category-tag {
