@@ -253,6 +253,19 @@ onActivated(() => {
   z-index: 100;
 }
 
+.back-btn {
+  position: absolute;
+  left: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-primary);
+}
+
 .nav-title {
   font-size: 18px;
   font-weight: 700;

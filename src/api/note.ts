@@ -57,8 +57,9 @@ export const noteApi = {
 // 收藏相关API
 export const favoriteApi = {
   // 收藏笔记
-  add: (noteId: number) => {
-    return post<void>(`/favorite/${noteId}`)
+  add: (noteId: number, folderId?: number) => {
+    const url = folderId ? `/favorite/${noteId}?folderId=${folderId}` : `/favorite/${noteId}`
+    return post<void>(url)
   },
 
   // 取消收藏
@@ -77,8 +78,34 @@ export const favoriteApi = {
   },
 
   // 获取我的收藏列表
-  getMyFavorites: () => {
-    return get<any[]>('/favorite/my')
+  getMyFavorites: (folderId?: number) => {
+    const url = folderId ? `/favorite/my?folderId=${folderId}` : '/favorite/my'
+    return get<any[]>(url)
+  },
+
+  // 获取收藏夹列表
+  getFolders: () => {
+    return get<any[]>('/favorite/folders')
+  },
+
+  // 创建收藏夹
+  createFolder: (name: string, description?: string) => {
+    return post<any>('/favorite/folders', { name, description })
+  },
+
+  // 删除收藏夹
+  deleteFolder: (folderId: number) => {
+    return del<void>(`/favorite/folders/${folderId}`)
+  },
+
+  // 移动收藏到指定收藏夹
+  moveToFolder: (favoriteId: number, folderId: number) => {
+    return put<void>(`/favorite/${favoriteId}/folder?folderId=${folderId}`)
+  },
+
+  // 通过笔记ID移动收藏到指定收藏夹
+  moveToFolderByNoteId: (noteId: number, folderId: number) => {
+    return put<void>(`/favorite/note/${noteId}/folder?folderId=${folderId}`)
   }
 }
 

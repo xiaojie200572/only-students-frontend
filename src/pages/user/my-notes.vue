@@ -1,5 +1,19 @@
 <template>
   <view class="my-notes-page">
+    <!-- 自定义弹窗 -->
+    <CustomModal
+      :visible="modalVisible"
+      :title="modalTitle"
+      :content="modalContent"
+      :confirm-text="modalConfirmText"
+      :cancel-text="modalCancelText"
+      :show-cancel="modalShowCancel"
+      :confirm-color="modalConfirmColor"
+      @confirm="handleModalConfirm"
+      @cancel="handleModalCancel"
+      @close="handleModalCancel"
+    />
+
     <view class="page-nav">
       <view class="back-btn" @click="goBack">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -117,6 +131,56 @@ import { ref, onMounted } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import { noteApi } from '@/api/note'
 import type { Note } from '@/types/api.types'
+import CustomModal from '@/components/CustomModal.vue'
+
+// 弹窗状态
+const modalVisible = ref(false)
+const modalTitle = ref('')
+const modalContent = ref('')
+const modalConfirmText = ref('确定')
+const modalCancelText = ref('取消')
+const modalShowCancel = ref(true)
+const modalConfirmColor = ref('')
+let modalResolve: ((value: boolean) => void) | null = null
+
+// 显示弹窗
+const showModal = (options: {
+  title?: string
+  content?: string
+  confirmText?: string
+  cancelText?: string
+  showCancel?: boolean
+  confirmColor?: string
+}): Promise<boolean> => {
+  return new Promise((resolve) => {
+    modalTitle.value = options.title || ''
+    modalContent.value = options.content || ''
+    modalConfirmText.value = options.confirmText || '确定'
+    modalCancelText.value = options.cancelText || '取消'
+    modalShowCancel.value = options.showCancel !== false
+    modalConfirmColor.value = options.confirmColor || ''
+    modalResolve = resolve
+    modalVisible.value = true
+  })
+}
+
+// 处理弹窗确认
+const handleModalConfirm = () => {
+  modalVisible.value = false
+  if (modalResolve) {
+    modalResolve(true)
+    modalResolve = null
+  }
+}
+
+// 处理弹窗取消
+const handleModalCancel = () => {
+  modalVisible.value = false
+  if (modalResolve) {
+    modalResolve(false)
+    modalResolve = null
+  }
+}
 
 const notes = ref<Note[]>([])
 const loading = ref(false)
@@ -182,30 +246,29 @@ const editNote = (note: Note) => {
   uni.navigateTo({ url: `/pages/note/publish?id=${note.id}&edit=true` })
 }
 
-const publishNote = (note: Note) => {
+const publishNote = async (note: Note) => {
 
   if (!note.id) {
     uni.showToast({ title: '笔记ID无效', icon: 'none' })
     return
   }
 
-  uni.showModal({
+  const confirmed = await showModal({
     title: '确认发布',
     content: `确定要发布笔记"${note.title}"吗？发布后其他用户将可以看到。`,
-    confirmColor: '#4CAF50',
-    success: async (res) => {
-      if (res.confirm) {
-        try {
-          console.log('调用发布API, noteId:', note.id)
-          await noteApi.publish(note.id)
-          note.status = 2 // 更新状态为已发布
-          uni.showToast({ title: '发布成功', icon: 'success' })
-        } catch (error: any) {
-          uni.showToast({ title: `发布失败: ${error.message || '未知错误'}`, icon: 'none' })
-        }
-      }
-    }
+    confirmColor: '#4CAF50'
   })
+  
+  if (confirmed) {
+    try {
+      console.log('调用发布API, noteId:', note.id)
+      await noteApi.publish(note.id)
+      note.status = 2 // 更新状态为已发布
+      uni.showToast({ title: '发布成功', icon: 'success' })
+    } catch (error: any) {
+      uni.showToast({ title: `发布失败: ${error.message || '未知错误'}`, icon: 'none' })
+    }
+  }
 }
 
 const goBack = () => {

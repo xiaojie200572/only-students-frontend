@@ -28,34 +28,24 @@
         <view
           v-for="sub in subscriptions"
           :key="sub.id"
-          class="subscription-card"
+          class="subscription-item"
+          @click="goToCreator(sub.creatorId)"
         >
-          <view class="creator-info" @click="goToCreator(sub.creatorId)">
-            <image
-              :src="sub.creatorAvatar || '/static/default-avatar.svg'"
-              class="creator-avatar"
-              mode="aspectFill"
-            />
-            <view class="creator-detail">
-              <text class="creator-name">{{ sub.creatorName }}</text>
-              <text class="subscription-time">{{ formatTime(sub.startTime) }} 订阅</text>
+          <image
+            :src="sub.creatorAvatar || '/static/default-avatar.svg'"
+            class="creator-avatar"
+            mode="aspectFill"
+          />
+          <view class="creator-info">
+            <view class="creator-name-row">
+              <text class="creator-nickname">{{ sub.creatorNickname || sub.creatorName }}</text>
+              <text class="creator-username">@{{ sub.creatorUsername || sub.creatorName }}</text>
             </view>
+            <text v-if="sub.creatorBio" class="creator-bio">{{ sub.creatorBio }}</text>
+            <text v-else class="creator-bio empty">暂无介绍</text>
           </view>
-
           <view class="subscription-status">
-            <view :class="['status-badge', sub.status === 1 ? 'active' : 'expired']">
-              {{ sub.status === 1 ? '订阅中' : '已过期' }}
-            </view>
-            <text v-if="sub.endTime" class="expire-time">{{ getExpireText(sub.endTime) }}</text>
-          </view>
-
-          <view class="subscription-action">
-            <view v-if="sub.status === 1" class="btn-renew" @click="renewSubscription(sub)">
-              续费
-            </view>
-            <view v-else class="btn-subscribe" @click="subscribeAgain(sub.creatorId)">
-              重新订阅
-            </view>
+            <text class="status-text">已订阅</text>
           </view>
         </view>
 
@@ -94,6 +84,7 @@ const loadSubscriptions = async () => {
 
   try {
     const res = await subscriptionApi.getMySubscriptions()
+    console.log('订阅列表数据:', res)
     subscriptions.value = res
     hasMore.value = false // 订阅列表通常一次性返回
   } catch (error) {
@@ -108,52 +99,11 @@ const loadMore = () => {
   // 如果支持分页，在这里实现
 }
 
-const formatTime = (time: string): string => {
-  const date = new Date(time)
-  return `${date.getFullYear()}.${String(date.getMonth() + 1).padStart(2, '0')}.${String(date.getDate()).padStart(2, '0')}`
-}
-
-const getExpireText = (endTime: string): string => {
-  const end = new Date(endTime)
-  const now = new Date()
-  const diffDays = Math.ceil((end.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
-
-  if (diffDays < 0) {
-    return '已过期'
-  } else if (diffDays === 0) {
-    return '今天到期'
-  } else if (diffDays <= 7) {
-    return `${diffDays}天后到期`
-  } else {
-    return `${end.getFullYear()}.${String(end.getMonth() + 1).padStart(2, '0')}.${String(end.getDate()).padStart(2, '0')} 到期`
-  }
-}
-
-const goBack = () => {
-  uni.navigateBack()
-}
-
 const goToDiscover = () => {
-  uni.switchTab({ url: '/pages/discover/index' })
+  uni.reLaunch({ url: '/pages/discover/index' })
 }
 
 const goToCreator = (creatorId: number) => {
-  uni.navigateTo({ url: `/pages/user/profile?id=${creatorId}` })
-}
-
-const renewSubscription = (sub: Subscription) => {
-  uni.showModal({
-    title: '续费订阅',
-    content: `确定要续费 ${sub.creatorName} 的订阅吗？`,
-    success: (res) => {
-      if (res.confirm) {
-        uni.showToast({ title: '跳转到支付页面', icon: 'none' })
-      }
-    }
-  })
-}
-
-const subscribeAgain = (creatorId: number) => {
   uni.navigateTo({ url: `/pages/user/profile?id=${creatorId}` })
 }
 </script>
@@ -252,99 +202,77 @@ const subscribeAgain = (creatorId: number) => {
 }
 
 .subscription-list {
-  padding: 16px;
+  padding: 0;
 }
 
-.subscription-card {
-  background: var(--bg-card);
-  border-radius: 16px;
-  padding: 16px;
-  margin-bottom: 12px;
-  border: 1px solid var(--border-light);
-}
-
-.creator-info {
+.subscription-item {
   display: flex;
   align-items: center;
-  margin-bottom: 12px;
+  padding: 12px 16px;
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border-light);
+}
+
+.subscription-item:active {
+  background: var(--bg-secondary);
 }
 
 .creator-avatar {
-  width: 50px;
-  height: 50px;
+  width: 48px;
+  height: 48px;
   border-radius: 50%;
   margin-right: 12px;
   border: 2px solid var(--bg-card);
   box-shadow: 0 0 0 1px var(--border-light);
+  flex-shrink: 0;
 }
 
-.creator-detail {
+.creator-info {
   flex: 1;
+  min-width: 0;
+  margin-right: 12px;
 }
 
-.creator-name {
-  font-size: 16px;
-  font-weight: 600;
-  color: var(--text-primary);
-  display: block;
+.creator-name-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   margin-bottom: 4px;
 }
 
-.subscription-time {
-  font-size: 12px;
+.creator-nickname {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.creator-username {
+  font-size: 13px;
+  color: var(--text-tertiary);
+}
+
+.creator-bio {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.creator-bio.empty {
   color: var(--text-tertiary);
 }
 
 .subscription-status {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 12px;
+  flex-shrink: 0;
 }
 
-.status-badge {
-  padding: 4px 10px;
-  border-radius: 12px;
-  font-size: 11px;
-  font-weight: 600;
-}
-
-.status-badge.active {
-  background: #E8F5E9;
-  color: #4CAF50;
-}
-
-.status-badge.expired {
-  background: #FFEBEE;
-  color: #F44336;
-}
-
-.expire-time {
-  font-size: 12px;
-  color: var(--text-secondary);
-}
-
-.subscription-action {
-  display: flex;
-  justify-content: flex-end;
-}
-
-.btn-renew, .btn-subscribe {
-  padding: 8px 20px;
-  border-radius: 16px;
+.status-text {
   font-size: 13px;
-  font-weight: 600;
-}
-
-.btn-renew {
-  background: var(--accent-warm);
-  color: white;
-}
-
-.btn-subscribe {
-  background: var(--bg-secondary);
-  color: var(--text-primary);
-  border: 1px solid var(--border-light);
+  color: var(--accent-warm);
+  font-weight: 500;
 }
 
 .loading-more {

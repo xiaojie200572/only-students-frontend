@@ -1,5 +1,19 @@
 <template>
   <view class="settings-page">
+    <!-- 自定义弹窗 -->
+    <CustomModal
+      :visible="modalVisible"
+      :title="modalTitle"
+      :content="modalContent"
+      :confirm-text="modalConfirmText"
+      :cancel-text="modalCancelText"
+      :show-cancel="modalShowCancel"
+      :confirm-color="modalConfirmColor"
+      @confirm="handleModalConfirm"
+      @cancel="handleModalCancel"
+      @close="handleModalCancel"
+    />
+
     <view class="page-nav">
       <view class="back-btn" @click="goBack">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -123,9 +137,59 @@
 import { ref, computed } from 'vue'
 import { useUserStore } from '@/stores/user'
 import { useThemeStore } from '@/stores/theme'
+import CustomModal from '@/components/CustomModal.vue'
 
 const userStore = useUserStore()
 const themeStore = useThemeStore()
+
+// 弹窗状态
+const modalVisible = ref(false)
+const modalTitle = ref('')
+const modalContent = ref('')
+const modalConfirmText = ref('确定')
+const modalCancelText = ref('取消')
+const modalShowCancel = ref(true)
+const modalConfirmColor = ref('')
+let modalResolve: ((value: boolean) => void) | null = null
+
+// 显示弹窗
+const showModal = (options: {
+  title?: string
+  content?: string
+  confirmText?: string
+  cancelText?: string
+  showCancel?: boolean
+  confirmColor?: string
+}): Promise<boolean> => {
+  return new Promise((resolve) => {
+    modalTitle.value = options.title || ''
+    modalContent.value = options.content || ''
+    modalConfirmText.value = options.confirmText || '确定'
+    modalCancelText.value = options.cancelText || '取消'
+    modalShowCancel.value = options.showCancel !== false
+    modalConfirmColor.value = options.confirmColor || ''
+    modalResolve = resolve
+    modalVisible.value = true
+  })
+}
+
+// 处理弹窗确认
+const handleModalConfirm = () => {
+  modalVisible.value = false
+  if (modalResolve) {
+    modalResolve(true)
+    modalResolve = null
+  }
+}
+
+// 处理弹窗取消
+const handleModalCancel = () => {
+  modalVisible.value = false
+  if (modalResolve) {
+    modalResolve(false)
+    modalResolve = null
+  }
+}
 
 const userInfo = computed(() => userStore.userInfo)
 const isDark = computed(() => themeStore.isDark)
@@ -166,8 +230,8 @@ const bindEmail = () => {
   uni.showToast({ title: '功能开发中', icon: 'none' })
 }
 
-const showAbout = () => {
-  uni.showModal({
+const showAbout = async () => {
+  await showModal({
     title: '关于 OnlyStudents',
     content: 'OnlyStudents 是一个学习笔记分享平台，让知识传播更简单。',
     showCancel: false
@@ -182,18 +246,17 @@ const showAgreement = () => {
   uni.navigateTo({ url: '/pages/user/user-agreement' })
 }
 
-const clearCache = () => {
-  uni.showModal({
+const clearCache = async () => {
+  const confirmed = await showModal({
     title: '提示',
-    content: '确定要清除缓存吗？',
-    success: (res) => {
-      if (res.confirm) {
-        // 清除缓存逻辑
-        cacheSize.value = '0 B'
-        uni.showToast({ title: '缓存已清除', icon: 'success' })
-      }
-    }
+    content: '确定要清除缓存吗？'
   })
+  
+  if (confirmed) {
+    // 清除缓存逻辑
+    cacheSize.value = '0 B'
+    uni.showToast({ title: '缓存已清除', icon: 'success' })
+  }
 }
 
 const goBack = () => {

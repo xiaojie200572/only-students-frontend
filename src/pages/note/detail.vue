@@ -1,5 +1,74 @@
 <template>
   <view class="detail-page" v-if="note">
+    <!-- 收藏成功底部弹窗 -->
+    <view v-if="showFavoriteSuccess" class="success-modal-mask" @click="closeFavoriteSuccessModal">
+      <view class="success-modal-panel" @click.stop>
+        <view class="success-modal-content">
+          <view class="success-icon">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#52c41a" stroke-width="2">
+              <path d="M20 6L9 17l-5-5"/>
+            </svg>
+          </view>
+          <text class="success-title">收藏成功！</text>
+        </view>
+        <view class="success-modal-actions">
+          <view class="success-btn-cancel" @click="closeFavoriteSuccessModal">知道了</view>
+          <view class="success-btn-confirm" @click="openFolderSelector">修改文件夹</view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 文件夹选择弹窗 -->
+    <view v-if="showFolderSelector" class="folder-modal-mask" @click="closeFolderSelector">
+      <view class="folder-modal-panel" @click.stop>
+        <view class="folder-modal-header">
+          <text class="folder-modal-title">选择收藏夹</text>
+          <view class="folder-modal-close" @click="closeFolderSelector">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="18" y1="6" x2="6" y2="18"/>
+              <line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </view>
+        </view>
+        <scroll-view scroll-y class="folder-modal-list">
+          <view 
+            v-for="folder in folders" 
+            :key="folder.id"
+            class="folder-modal-item"
+            :class="{ active: currentFolderId === folder.id }"
+            @click="selectFolder(folder)"
+          >
+            <view class="folder-modal-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+              </svg>
+            </view>
+            <text class="folder-modal-name">{{ folder.name }}</text>
+            <text class="folder-modal-count">{{ folder.count }}条</text>
+            <view v-if="currentFolderId === folder.id" class="folder-modal-check">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="20 6 9 17 4 12"/>
+              </svg>
+            </view>
+          </view>
+        </scroll-view>
+      </view>
+    </view>
+
+    <!-- 其他弹窗（如分享成功） -->
+    <CustomModal
+      :visible="modalVisible"
+      :title="modalTitle"
+      :content="modalContent"
+      :confirm-text="modalConfirmText"
+      :cancel-text="modalCancelText"
+      :show-cancel="modalShowCancel"
+      :confirm-color="modalConfirmColor"
+      @confirm="handleModalConfirm"
+      @cancel="handleModalCancel"
+      @close="handleModalCancel"
+    />
+
     <!-- 导航栏 -->
     <view class="detail-nav">
       <view class="back-btn" @click="goBack">
@@ -388,9 +457,126 @@ import { noteApi, favoriteApi, ratingApi, shareApi, commentApi } from '@/api/not
 import { subscriptionApi, paymentApi } from '@/api/message'
 import { getFilePreviewUrl, getFileConvertStatus } from '@/api/file'
 import { useUserStore } from '@/stores/user'
+import CustomModal from '@/components/CustomModal.vue'
 import type { Note } from '@/types/api.types'
 
 const userStore = useUserStore()
+
+// 收藏成功弹窗状态
+const showFavoriteSuccess = ref(false)
+
+// 文件夹相关
+interface Folder {
+  id: number | string | null
+  name: string
+  count: number
+}
+
+const folders = ref<Folder[]>([])
+const showFolderSelector = ref(false)
+const currentFolderId = ref<number | string | null>(null)
+
+// 加载文件夹列表
+const loadFolders = async () => {
+  try {
+    const res = await favoriteApi.getFolders()
+    folders.value = res || []
+    const allFolder = folders.value.find(f => f.id === null)
+    currentFolderId.value = allFolder?.id ?? null
+  } catch (error) {
+    console.error('加载文件夹失败:', error)
+  }
+}
+
+// 打开文件夹选择器
+const openFolderSelector = () => {
+  loadFolders()
+  showFolderSelector.value = true
+}
+
+// 关闭文件夹选择器
+const closeFolderSelector = () => {
+  showFolderSelector.value = false
+}
+
+// 选择文件夹
+const selectFolder = async (folder: Folder) => {
+  currentFolderId.value = folder.id
+  closeFolderSelector()
+  closeFavoriteSuccessModal()
+  
+  // 调用API将笔记移动到选定的收藏夹
+  try {
+    await favoriteApi.moveToFolderByNoteId(noteId.value, folder.id as number)
+    uni.showToast({ title: '已移动到 ' + folder.name, icon: 'success' })
+  } catch (error) {
+    console.error('移动收藏失败:', error)
+  }
+}
+
+// 显示弹窗
+const showModal = (options: {
+  title?: string
+  content?: string
+  confirmText?: string
+  cancelText?: string
+  showCancel?: boolean
+  confirmColor?: string
+}): Promise<boolean> => {
+  return new Promise((resolve) => {
+    modalTitle.value = options.title || ''
+    modalContent.value = options.content || ''
+    modalConfirmText.value = options.confirmText || '确定'
+    modalCancelText.value = options.cancelText || '取消'
+    modalShowCancel.value = options.showCancel !== false
+    modalConfirmColor.value = options.confirmColor || ''
+    modalResolve = resolve
+    modalVisible.value = true
+  })
+}
+
+// 处理弹窗确认
+const handleModalConfirm = () => {
+  // 如果是收藏成功弹窗，点击"修改文件夹"跳转到收藏页面
+  if (currentModalType === 'favoriteSuccess') {
+    modalVisible.value = false
+    currentModalType = ''
+    uni.navigateTo({ url: '/pages/user/my-favorites' })
+    return
+  }
+  
+  modalVisible.value = false
+  if (modalResolve) {
+    modalResolve(true)
+    modalResolve = null
+  }
+}
+
+// 处理弹窗取消
+const handleModalCancel = () => {
+  currentModalType = ''
+  modalVisible.value = false
+  if (modalResolve) {
+    modalResolve(false)
+    modalResolve = null
+  }
+}
+
+// 显示收藏成功弹窗
+const showFavoriteSuccessModal = () => {
+  showFavoriteSuccess.value = true
+}
+
+// 关闭收藏成功弹窗
+const closeFavoriteSuccessModal = () => {
+  showFavoriteSuccess.value = false
+}
+
+// 跳转到收藏页面
+const goToFavorites = () => {
+  showFavoriteSuccess.value = false
+  uni.navigateTo({ url: '/pages/user/my-favorites' })
+}
 
 const noteId = ref<number>(0)
 const note = ref<Note | null>(null)
@@ -798,7 +984,8 @@ const toggleFavorite = async () => {
       await favoriteApi.add(noteId.value)
       isFavorited.value = true
       note.value!.favoriteCount++
-      uni.showToast({ title: '已收藏', icon: 'success' })
+      // 显示收藏成功弹窗，右侧显示"修改文件夹"
+      showFavoriteSuccessModal()
     }
   } catch (error) {
     uni.showToast({ title: '操作失败', icon: 'none' })
@@ -813,7 +1000,7 @@ const shareNote = async () => {
 
   try {
     const res = await shareApi.create(noteId.value)
-    uni.showModal({
+    await showModal({
       title: '分享成功',
       content: `分享码: ${res.shareCode}`,
       showCancel: false
@@ -1026,6 +1213,175 @@ const formatTime = (time: string) => {
 </script>
 
 <style scoped>
+/* 收藏成功底部弹窗 */
+.success-modal-mask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.success-modal-panel {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: var(--bg-card);
+  border-radius: 20px 20px 0 0;
+  padding: 24px 20px;
+  padding-bottom: calc(24px + env(safe-area-inset-bottom));
+  animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+.success-modal-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px 0;
+}
+
+.success-icon {
+  margin-bottom: 12px;
+}
+
+.success-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.success-modal-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.success-btn-cancel,
+.success-btn-confirm {
+  flex: 1;
+  height: 44px;
+  line-height: 44px;
+  text-align: center;
+  font-size: 16px;
+  border-radius: 22px;
+}
+
+.success-btn-cancel {
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+}
+
+.success-btn-confirm {
+  background: var(--accent-warm);
+  color: #fff;
+  font-weight: 600;
+}
+
+/* 文件夹选择弹窗 */
+.folder-modal-mask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1001;
+  animation: fadeIn 0.2s ease;
+}
+
+.folder-modal-panel {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: var(--bg-card);
+  border-radius: 20px 20px 0 0;
+  max-height: 60vh;
+  min-height: 200px;
+  overflow-y: auto;
+  animation: slideUp 0.3s ease;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.folder-modal-header {
+  position: sticky;
+  top: 0;
+  background: var(--bg-card);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.folder-modal-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.folder-modal-close {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-tertiary);
+}
+
+.folder-modal-list {
+  max-height: 50vh;
+  padding: 8px 0;
+}
+
+.folder-modal-item {
+  display: flex;
+  align-items: center;
+  padding: 14px 20px;
+  gap: 12px;
+}
+
+.folder-modal-item:active {
+  background: var(--bg-secondary);
+}
+
+.folder-modal-item.active {
+  background: var(--bg-secondary);
+}
+
+.folder-modal-icon {
+  color: var(--accent-warm);
+}
+
+.folder-modal-name {
+  flex: 1;
+  font-size: 15px;
+  color: var(--text-primary);
+}
+
+.folder-modal-count {
+  font-size: 13px;
+  color: var(--text-tertiary);
+}
+
+.folder-modal-check {
+  color: var(--accent-warm);
+}
+
 /* 页面基础 */
 .detail-page {
   min-height: 100vh;

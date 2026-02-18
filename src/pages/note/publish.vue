@@ -1,5 +1,19 @@
 <template>
   <view class="publish-page">
+    <!-- 自定义弹窗 -->
+    <CustomModal
+      :visible="modalVisible"
+      :title="modalTitle"
+      :content="modalContent"
+      :confirm-text="modalConfirmText"
+      :cancel-text="modalCancelText"
+      :show-cancel="modalShowCancel"
+      :confirm-color="modalConfirmColor"
+      @confirm="handleModalConfirm"
+      @cancel="handleModalCancel"
+      @close="handleModalCancel"
+    />
+
     <view class="page-nav">
       <view class="back-btn" @click="goBack">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -29,7 +43,7 @@
           <!-- 已上传的附件 -->
           <view 
             v-for="(file, index) in form.attachments" 
-            :key="file.fileId || file.fileName || index"
+            :key="file.fileId || index"
             class="attachment-item"
           >
             <!-- 图片预览 -->
@@ -203,9 +217,59 @@ import { noteApi } from '@/api/note'
 import { useUserStore } from '@/stores/user'
 import { API_BASE_URL } from '@/config/api.config'
 import { uploadPrivateFile, uploadNoteFile, deleteFile } from '@/api/file'
+import CustomModal from '@/components/CustomModal.vue'
 
 const noteStore = useNoteStore()
 const userStore = useUserStore()
+
+// 弹窗状态
+const modalVisible = ref(false)
+const modalTitle = ref('')
+const modalContent = ref('')
+const modalConfirmText = ref('确定')
+const modalCancelText = ref('取消')
+const modalShowCancel = ref(true)
+const modalConfirmColor = ref('')
+let modalResolve: ((value: boolean) => void) | null = null
+
+// 显示弹窗
+const showModal = (options: {
+  title?: string
+  content?: string
+  confirmText?: string
+  cancelText?: string
+  showCancel?: boolean
+  confirmColor?: string
+}): Promise<boolean> => {
+  return new Promise((resolve) => {
+    modalTitle.value = options.title || ''
+    modalContent.value = options.content || ''
+    modalConfirmText.value = options.confirmText || '确定'
+    modalCancelText.value = options.cancelText || '取消'
+    modalShowCancel.value = options.showCancel !== false
+    modalConfirmColor.value = options.confirmColor || ''
+    modalResolve = resolve
+    modalVisible.value = true
+  })
+}
+
+// 处理弹窗确认
+const handleModalConfirm = () => {
+  modalVisible.value = false
+  if (modalResolve) {
+    modalResolve(true)
+    modalResolve = null
+  }
+}
+
+// 处理弹窗取消
+const handleModalCancel = () => {
+  modalVisible.value = false
+  if (modalResolve) {
+    modalResolve(false)
+    modalResolve = null
+  }
+}
 // 获取页面参数（编辑模式）
 const page = getCurrentPages()[getCurrentPages().length - 1] as any
 const noteId = ref<number | null>(page.options?.id ? parseInt(page.options.id) : null)
@@ -300,21 +364,17 @@ const removeAttachment = async (index: number) => {
   const file = form.value.attachments[index]
   if (!file) return
 
-  uni.showModal({
+  const confirmed = await showModal({
     title: '确认删除',
     content: '确定要删除这个附件吗？点击保存后才会真正删除。',
-    confirmColor: '#F44336',
-    success: async (res) => {
-      if (res.confirm) {
-        // 从表单中移除（仅本地）
-        const newAttachments = [...form.value.attachments]
-        newAttachments.splice(index, 1)
-        form.value.attachments = newAttachments
-        
-        uni.showToast({ title: '已移除（请保存）', icon: 'success' })
-      }
-    }
+    confirmColor: '#F44336'
   })
+  
+  if (confirmed) {
+    // 从表单中移除（仅本地）
+    form.value.attachments.splice(index, 1)
+    uni.showToast({ title: '已移除（请保存）', icon: 'success' })
+  }
 }
 
 // 检查文件大小限制（5MB）
@@ -582,9 +642,9 @@ const handleSave = async () => {
             console.error('后端文件删除失败:', att.fileId, error)
           }
         }))
-        // 更新原始附件列表
-        originalAttachments.value = JSON.parse(JSON.stringify(form.value.attachments))
       }
+      // 更新原始附件列表（无论是否有删除都要更新）
+      originalAttachments.value = JSON.parse(JSON.stringify(form.value.attachments))
     }
 
     const noteData = {
@@ -594,7 +654,7 @@ const handleSave = async () => {
       visibility: form.value.visibility,
       price: (form.value.visibility === 2 || form.value.visibility === 3) ? (parseFloat(form.value.price) || 0) : 0,
       tags: form.value.tags,
-      attachments: form.value.attachments.length > 0 ? JSON.stringify(form.value.attachments) : null,
+      attachments: JSON.stringify(form.value.attachments),
       authorUsername: userStore.userInfo?.username,
       authorAvatar: userStore.userInfo?.avatar,
     }
@@ -640,25 +700,24 @@ const handleDelete = () => {
     return
   }
 
-  uni.showModal({
+  const confirmed = await showModal({
     title: '确认删除',
     content: '确定要删除这篇笔记吗？此操作不可恢复。',
-    confirmColor: '#F44336',
-    success: async (res) => {
-      if (res.confirm) {
-        try {
-          await noteApi.delete(noteId.value!)
-          uni.showToast({ title: '删除成功', icon: 'success' })
-          setTimeout(() => {
-            uni.redirectTo({ url: '/pages/user/my-notes' })
-          }, 1500)
-        } catch (error) {
-          console.error('删除失败:', error)
-          uni.showToast({ title: '删除失败', icon: 'none' })
-        }
-      }
-    }
+    confirmColor: '#F44336'
   })
+  
+  if (confirmed) {
+    try {
+      await noteApi.delete(noteId.value!)
+      uni.showToast({ title: '删除成功', icon: 'success' })
+      setTimeout(() => {
+        uni.redirectTo({ url: '/pages/user/my-notes' })
+      }, 1500)
+    } catch (error) {
+      console.error('删除失败:', error)
+      uni.showToast({ title: '删除失败', icon: 'none' })
+    }
+  }
 }
 
 const goBack = () => {

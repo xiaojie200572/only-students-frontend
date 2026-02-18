@@ -1,5 +1,19 @@
 <template>
   <view class="creator-profile-page">
+    <!-- 自定义弹窗 -->
+    <CustomModal
+      :visible="modalVisible"
+      :title="modalTitle"
+      :content="modalContent"
+      :confirm-text="modalConfirmText"
+      :cancel-text="modalCancelText"
+      :show-cancel="modalShowCancel"
+      :confirm-color="modalConfirmColor"
+      @confirm="handleModalConfirm"
+      @cancel="handleModalCancel"
+      @close="handleModalCancel"
+    />
+
     <view class="page-nav">
       <view class="back-btn" @click="goBack">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -112,8 +126,58 @@ import { ref, computed, onMounted } from 'vue'
 import { useUserStore } from '@/stores/user'
 import { get, post, del } from '@/api'
 import type { UserInfo } from '@/types/api.types'
+import CustomModal from '@/components/CustomModal.vue'
 
 const userStore = useUserStore()
+
+// 弹窗状态
+const modalVisible = ref(false)
+const modalTitle = ref('')
+const modalContent = ref('')
+const modalConfirmText = ref('确定')
+const modalCancelText = ref('取消')
+const modalShowCancel = ref(true)
+const modalConfirmColor = ref('')
+let modalResolve: ((value: boolean) => void) | null = null
+
+// 显示弹窗
+const showModal = (options: {
+  title?: string
+  content?: string
+  confirmText?: string
+  cancelText?: string
+  showCancel?: boolean
+  confirmColor?: string
+}): Promise<boolean> => {
+  return new Promise((resolve) => {
+    modalTitle.value = options.title || ''
+    modalContent.value = options.content || ''
+    modalConfirmText.value = options.confirmText || '确定'
+    modalCancelText.value = options.cancelText || '取消'
+    modalShowCancel.value = options.showCancel !== false
+    modalConfirmColor.value = options.confirmColor || ''
+    modalResolve = resolve
+    modalVisible.value = true
+  })
+}
+
+// 处理弹窗确认
+const handleModalConfirm = () => {
+  modalVisible.value = false
+  if (modalResolve) {
+    modalResolve(true)
+    modalResolve = null
+  }
+}
+
+// 处理弹窗取消
+const handleModalCancel = () => {
+  modalVisible.value = false
+  if (modalResolve) {
+    modalResolve(false)
+    modalResolve = null
+  }
+}
 
 const creator = ref<UserInfo | null>(null)
 const notes = ref<any[]>([])
@@ -187,49 +251,47 @@ const toggleSubscribe = async () => {
 
   if (isSubscribed.value) {
     // 取消订阅
-    uni.showModal({
+    const confirmed = await showModal({
       title: '提示',
-      content: '确定要取消订阅吗？',
-      success: async (res) => {
-        if (res.confirm) {
-          try {
-            await del(`/subscription/${creatorId.value}`)
-            isSubscribed.value = false
-            stats.value.subscriberCount--
-            uni.showToast({ title: '已取消订阅', icon: 'success' })
-          } catch (error) {
-            uni.showToast({ title: '操作失败', icon: 'none' })
-          }
-        }
-      }
+      content: '确定要取消订阅吗？'
     })
+    
+    if (confirmed) {
+      try {
+        await del(`/subscription/${creatorId.value}`)
+        isSubscribed.value = false
+        stats.value.subscriberCount--
+        uni.showToast({ title: '已取消订阅', icon: 'success' })
+      } catch (error) {
+        uni.showToast({ title: '操作失败', icon: 'none' })
+      }
+    }
   } else {
     subscribe()
   }
 }
 
-const subscribe = () => {
+const subscribe = async () => {
   if (!userStore.isLoggedIn) {
     uni.navigateTo({ url: '/pages/auth/login' })
     return
   }
 
-  uni.showModal({
+  const confirmed = await showModal({
     title: '订阅确认',
-    content: `确定要订阅 ${creator.value?.nickname || creator.value?.username} 吗？`,
-    success: async (res) => {
-      if (res.confirm) {
-        try {
-          await post('/subscription', { creatorId: creatorId.value })
-          isSubscribed.value = true
-          stats.value.subscriberCount++
-          uni.showToast({ title: '订阅成功', icon: 'success' })
-        } catch (error) {
-          uni.showToast({ title: '订阅失败', icon: 'none' })
-        }
-      }
-    }
+    content: `确定要订阅 ${creator.value?.nickname || creator.value?.username} 吗？`
   })
+  
+  if (confirmed) {
+    try {
+      await post('/subscription', { creatorId: creatorId.value })
+      isSubscribed.value = true
+      stats.value.subscriberCount++
+      uni.showToast({ title: '订阅成功', icon: 'success' })
+    } catch (error) {
+      uni.showToast({ title: '订阅失败', icon: 'none' })
+    }
+  }
 }
 
 const sendMessage = () => {

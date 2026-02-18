@@ -1,5 +1,19 @@
 <template>
   <view class="register-page">
+    <!-- 自定义弹窗 -->
+    <CustomModal
+      :visible="modalVisible"
+      :title="modalTitle"
+      :content="modalContent"
+      :confirm-text="modalConfirmText"
+      :cancel-text="modalCancelText"
+      :show-cancel="modalShowCancel"
+      :confirm-color="modalConfirmColor"
+      @confirm="handleModalConfirm"
+      @cancel="handleModalCancel"
+      @close="handleModalCancel"
+    />
+
     <view class="register-container">
       <!-- Logo区域 -->
       <view class="logo-section">
@@ -110,8 +124,58 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useUserStore } from '@/stores/user'
+import CustomModal from '@/components/CustomModal.vue'
 
 const userStore = useUserStore()
+
+// 弹窗状态
+const modalVisible = ref(false)
+const modalTitle = ref('')
+const modalContent = ref('')
+const modalConfirmText = ref('确定')
+const modalCancelText = ref('取消')
+const modalShowCancel = ref(true)
+const modalConfirmColor = ref('')
+let modalResolve: ((value: boolean) => void) | null = null
+
+// 显示弹窗
+const showModal = (options: {
+  title?: string
+  content?: string
+  confirmText?: string
+  cancelText?: string
+  showCancel?: boolean
+  confirmColor?: string
+}): Promise<boolean> => {
+  return new Promise((resolve) => {
+    modalTitle.value = options.title || ''
+    modalContent.value = options.content || ''
+    modalConfirmText.value = options.confirmText || '确定'
+    modalCancelText.value = options.cancelText || '取消'
+    modalShowCancel.value = options.showCancel !== false
+    modalConfirmColor.value = options.confirmColor || ''
+    modalResolve = resolve
+    modalVisible.value = true
+  })
+}
+
+// 处理弹窗确认
+const handleModalConfirm = () => {
+  modalVisible.value = false
+  if (modalResolve) {
+    modalResolve(true)
+    modalResolve = null
+  }
+}
+
+// 处理弹窗取消
+const handleModalCancel = () => {
+  modalVisible.value = false
+  if (modalResolve) {
+    modalResolve(false)
+    modalResolve = null
+  }
+}
 
 const form = ref({
   username: '',
@@ -235,16 +299,16 @@ const goToLogin = () => {
   uni.navigateTo({ url: '/pages/auth/login' })
 }
 
-const showAgreement = () => {
-  uni.showModal({
+const showAgreement = async () => {
+  await showModal({
     title: '用户协议',
     content: '这里是用户协议内容...',
     showCancel: false
   })
 }
 
-const showPrivacy = () => {
-  uni.showModal({
+const showPrivacy = async () => {
+  await showModal({
     title: '隐私政策',
     content: '这里是隐私政策内容...',
     showCancel: false

@@ -31,7 +31,7 @@
         <view
           v-for="sub in subscribers"
           :key="sub.id"
-          class="subscriber-card"
+          class="subscriber-item"
           @click="goToUser(sub.subscriberId)"
         >
           <image
@@ -40,11 +40,12 @@
             mode="aspectFill"
           />
           <view class="subscriber-info">
-            <text class="subscriber-name">{{ sub.subscriberName }}</text>
-            <text class="subscribe-time">{{ formatTime(sub.startTime) }} 开始关注</text>
-          </view>
-          <view class="subscriber-action" @click.stop="sendMessage(sub)">
-            <text>私信</text>
+            <view class="subscriber-name-row">
+              <text class="subscriber-nickname">{{ sub.subscriberNickname || sub.subscriberName }}</text>
+              <text class="subscriber-username">@{{ sub.subscriberUsername || sub.subscriberName }}</text>
+            </view>
+            <text v-if="sub.subscriberBio" class="subscriber-bio">{{ sub.subscriberBio }}</text>
+            <text v-else class="subscriber-bio empty">暂无介绍</text>
           </view>
         </view>
       </view>
@@ -67,6 +68,7 @@ const loadSubscribers = async () => {
   loading.value = true
   try {
     const res = await subscriptionApi.getMySubscribers()
+    console.log('粉丝列表数据:', res)
     subscribers.value = res
   } catch (error) {
     console.error('加载粉丝列表失败:', error)
@@ -76,19 +78,8 @@ const loadSubscribers = async () => {
   }
 }
 
-const formatTime = (time: string): string => {
-  const date = new Date(time)
-  return `${date.getFullYear()}.${String(date.getMonth() + 1).padStart(2, '0')}.${String(date.getDate()).padStart(2, '0')}`
-}
-
 const goToUser = (userId: number) => {
   uni.navigateTo({ url: `/pages/user/profile?id=${userId}` })
-}
-
-const sendMessage = (sub: any) => {
-  uni.navigateTo({
-    url: `/pages/message/chat?id=${sub.subscriberId}&name=${sub.subscriberName}`
-  })
 }
 
 const goBack = () => {
@@ -194,52 +185,65 @@ const goBack = () => {
 }
 
 .subscribers-list {
-  padding: 16px;
+  padding: 0;
 }
 
-.subscriber-card {
+.subscriber-item {
   display: flex;
   align-items: center;
+  padding: 12px 16px;
   background: var(--bg-card);
-  border-radius: 16px;
-  padding: 16px;
-  margin-bottom: 12px;
-  border: 1px solid var(--border-light);
+  border-bottom: 1px solid var(--border-light);
+}
+
+.subscriber-item:active {
+  background: var(--bg-secondary);
 }
 
 .subscriber-avatar {
-  width: 50px;
-  height: 50px;
+  width: 48px;
+  height: 48px;
   border-radius: 50%;
   margin-right: 12px;
   border: 2px solid var(--bg-card);
   box-shadow: 0 0 0 1px var(--border-light);
+  flex-shrink: 0;
 }
 
 .subscriber-info {
   flex: 1;
+  min-width: 0;
 }
 
-.subscriber-name {
-  font-size: 16px;
-  font-weight: 600;
-  color: var(--text-primary);
-  display: block;
+.subscriber-name-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   margin-bottom: 4px;
 }
 
-.subscribe-time {
-  font-size: 12px;
+.subscriber-nickname {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.subscriber-username {
+  font-size: 13px;
   color: var(--text-tertiary);
 }
 
-.subscriber-action {
-  padding: 8px 16px;
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-light);
-  border-radius: 16px;
+.subscriber-bio {
   font-size: 13px;
-  color: var(--text-primary);
-  font-weight: 500;
+  color: var(--text-secondary);
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.subscriber-bio.empty {
+  color: var(--text-tertiary);
 }
 </style>

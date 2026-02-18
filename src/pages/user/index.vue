@@ -1,5 +1,19 @@
 <template>
   <view class="user-page">
+    <!-- 自定义弹窗 -->
+    <CustomModal
+      :visible="modalVisible"
+      :title="modalTitle"
+      :content="modalContent"
+      :confirm-text="modalConfirmText"
+      :cancel-text="modalCancelText"
+      :show-cancel="modalShowCancel"
+      :confirm-color="modalConfirmColor"
+      @confirm="handleModalConfirm"
+      @cancel="handleModalCancel"
+      @close="handleModalCancel"
+    />
+
     <!-- 导航栏 -->
     <view class="page-nav">
       <text class="nav-title">我的</text>
@@ -221,8 +235,58 @@ import { useUserStore } from '@/stores/user'
 import { walletApi, subscriptionApi, noteApi } from '@/api/index'
 import type { WalletInfo } from '@/types/api.types'
 import TabBar from '@/components/TabBar.vue'
+import CustomModal from '@/components/CustomModal.vue'
 
 const userStore = useUserStore()
+
+// 弹窗状态
+const modalVisible = ref(false)
+const modalTitle = ref('')
+const modalContent = ref('')
+const modalConfirmText = ref('确定')
+const modalCancelText = ref('取消')
+const modalShowCancel = ref(true)
+const modalConfirmColor = ref('')
+let modalResolve: ((value: boolean) => void) | null = null
+
+// 显示弹窗
+const showModal = (options: {
+  title?: string
+  content?: string
+  confirmText?: string
+  cancelText?: string
+  showCancel?: boolean
+  confirmColor?: string
+}): Promise<boolean> => {
+  return new Promise((resolve) => {
+    modalTitle.value = options.title || ''
+    modalContent.value = options.content || ''
+    modalConfirmText.value = options.confirmText || '确定'
+    modalCancelText.value = options.cancelText || '取消'
+    modalShowCancel.value = options.showCancel !== false
+    modalConfirmColor.value = options.confirmColor || ''
+    modalResolve = resolve
+    modalVisible.value = true
+  })
+}
+
+// 处理弹窗确认
+const handleModalConfirm = () => {
+  modalVisible.value = false
+  if (modalResolve) {
+    modalResolve(true)
+    modalResolve = null
+  }
+}
+
+// 处理弹窗取消
+const handleModalCancel = () => {
+  modalVisible.value = false
+  if (modalResolve) {
+    modalResolve(false)
+    modalResolve = null
+  }
+}
 
 const wallet = ref<WalletInfo | null>(null)
 const stats = ref({
@@ -338,17 +402,16 @@ const contactService = () => {
   uni.showToast({ title: '客服功能开发中', icon: 'none' })
 }
 
-const logout = () => {
-  uni.showModal({
+const logout = async () => {
+  const confirmed = await showModal({
     title: '提示',
-    content: '确定要退出登录吗？',
-    success: (res) => {
-      if (res.confirm) {
-        userStore.logout()
-        uni.showToast({ title: '已退出登录', icon: 'success' })
-      }
-    }
+    content: '确定要退出登录吗？'
   })
+  
+  if (confirmed) {
+    userStore.logout()
+    uni.showToast({ title: '已退出登录', icon: 'success' })
+  }
 }
 </script>
 
