@@ -178,8 +178,8 @@ export const commentApi = {
   },
 
   // 获取笔记评论列表
-  getByNoteId: (noteId: number, page: number = 1, size: number = 20) => {
-    return get<PageResult<any>>(`/comment/note/${noteId}`, { page, size })
+  getByNoteId: (noteId: number) => {
+    return get<any[]>(`/comment/note/${noteId}`)
   },
 
   // 点赞评论
@@ -195,6 +195,11 @@ export const commentApi = {
   // 获取评论数量
   getCount: (noteId: number) => {
     return get<number>(`/comment/count/${noteId}`)
+  },
+
+  // 获取评论详情（包含根评论和所有回复）
+  getDetail: (commentId: number) => {
+    return get<any>(`/comment/${commentId}`)
   }
 }
 

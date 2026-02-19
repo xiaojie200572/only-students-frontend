@@ -332,19 +332,24 @@
             v-for="comment in comments"
             :key="comment.id"
             class="comment-item"
+            @click="goToCommentDetail(comment)"
           >
             <image
-              :src="comment.userAvatar || '/static/default-avatar.svg'"
+              :src="comment.avatar || '/static/default-avatar.svg'"
               class="comment-avatar"
               mode="aspectFill"
+              @click.stop="goToUserProfile(comment.userId)"
             />
             <view class="comment-content">
               <view class="comment-header">
-                <text class="comment-username">{{ comment.username }}</text>
+                <view class="comment-user-info" @click.stop="goToUserProfile(comment.userId)">
+                  <text class="comment-nickname">{{ comment.nickname || comment.username }}</text>
+                  <text class="comment-username">@{{ comment.username }}</text>
+                </view>
                 <text class="comment-time">{{ formatTime(comment.createdAt) }}</text>
               </view>
               <text class="comment-text">{{ comment.content }}</text>
-              <view class="comment-actions">
+              <view class="comment-actions" @click.stop>
                 <view class="comment-action" @click="likeComment(comment)">
                   <svg width="14" height="14" viewBox="0 0 24 24" :fill="comment.isLiked ? '#FF6B6B' : 'none'" :stroke="comment.isLiked ? '#FF6B6B' : 'currentColor'" stroke-width="2">
                     <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
@@ -352,7 +357,13 @@
                   <text>{{ comment.likeCount || 0 }}</text>
                 </view>
                 <view class="comment-action" @click="replyComment(comment)">
-                  <text>回复</text>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>
+                  </svg>
+                  <text>{{ comment.replyCount || 0 }}</text>
+                </view>
+                <view class="comment-action" @click="goToCommentDetail(comment)">
+                  <text>查看详情</text>
                 </view>
               </view>
             </view>
@@ -922,13 +933,15 @@ const loadComments = async () => {
 
   commentLoading.value = true
   try {
-    const res = await commentApi.getByNoteId(noteId.value, commentPage.value)
+    const res = await commentApi.getByNoteId(noteId.value)
+    // 后端返回数组，前端适配
+    const list = Array.isArray(res) ? res : (res.list || [])
     if (commentPage.value === 1) {
-      comments.value = res.list
+      comments.value = list
     } else {
-      comments.value.push(...res.list)
+      comments.value.push(...list)
     }
-    commentCount.value = res.total
+    commentCount.value = list.length
   } catch (error) {
     console.error('加载评论失败:', error)
   } finally {
@@ -1051,6 +1064,19 @@ const submitComment = async () => {
 const replyComment = (comment: any) => {
   replyTo.value = comment
   showCommentInput.value = true
+}
+
+const goToCommentDetail = (comment: any) => {
+  uni.navigateTo({
+    url: `/pages/note/comment-detail?commentId=${comment.id}&noteId=${noteId.value}`
+  })
+}
+
+const goToUserProfile = (userId: number) => {
+  if (!userId) return
+  uni.navigateTo({
+    url: `/pages/user/profile?id=${userId}`
+  })
 }
 
 const likeComment = async (comment: any) => {
@@ -1919,13 +1945,25 @@ const formatTime = (time: string) => {
 .comment-header {
   display: flex;
   justify-content: space-between;
+  align-items: flex-start;
   margin-bottom: 4px;
 }
 
-.comment-username {
+.comment-user-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.comment-nickname {
   font-size: 13px;
   font-weight: 600;
   color: var(--text-primary);
+}
+
+.comment-username {
+  font-size: 11px;
+  color: var(--text-tertiary);
 }
 
 .comment-time {
