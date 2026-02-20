@@ -47,7 +47,8 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useThemeStore } from '@/stores/theme'
-import { notificationApi } from '@/api/message'
+import { notificationApi, messageApi } from '@/api/message'
+import { favoriteApi } from '@/api/note'
 
 const themeStore = useThemeStore()
 const searchKeyword = ref('')
@@ -56,22 +57,63 @@ let refreshInterval: ReturnType<typeof setInterval> | null = null
 
 const isDark = computed(() => themeStore.isDark)
 
-// 获取未读消息数
+// 获取未读消息数（所有模块的总和）
 const fetchUnreadCount = async () => {
+  console.log('fetchUnreadCount called')
   try {
-    const count = await notificationApi.getUnreadCount()
-    unreadCount.value = count || 0
+    let total = 0
+    
+    // 通知未读数
+    try {
+      const notificationCount = await notificationApi.getUnreadCount()
+      console.log('通知未读数:', notificationCount)
+      total += notificationCount || 0
+    } catch (e) {
+      console.error('获取通知未读数失败:', e)
+    }
+    
+    // 收藏未读数
+    try {
+      const favoriteCount = await favoriteApi.getMyNoteFavoriteUnreadCount()
+      console.log('收藏未读数:', favoriteCount)
+      total += favoriteCount || 0
+    } catch (e) {
+      console.error('获取收藏未读数失败:', e)
+    }
+    
+    // 私信未读数
+    try {
+      const conversations = await messageApi.getConversations()
+      console.log('私信未读数:', conversations)
+      total += conversations.reduce((sum, c) => sum + (c.unreadCount || 0), 0)
+    } catch (e) {
+      console.error('获取私信未读数失败:', e)
+    }
+    
+    // 粉丝未读数（暂为0）
+    // TODO: 需要订阅服务API
+    
+    console.log('总未读数:', total)
+    unreadCount.value = total
+    console.log('unreadCount.value set to:', unreadCount.value)
   } catch (error) {
     console.error('获取未读消息数失败:', error)
   }
 }
 
 onMounted(() => {
-  // 初始获取未读数
-  fetchUnreadCount()
+  // 检查是否登录
+  const token = uni.getStorageSync('token')
+  const userId = uni.getStorageSync('userId')
+  console.log('NavBar mounted, token:', !!token, 'userId:', userId)
   
-  // 每30秒刷新一次
-  refreshInterval = setInterval(fetchUnreadCount, 30000)
+  if (token && userId) {
+    // 初始获取未读数
+    fetchUnreadCount()
+    
+    // 每30秒刷新一次
+    refreshInterval = setInterval(fetchUnreadCount, 30000)
+  }
 })
 
 onUnmounted(() => {

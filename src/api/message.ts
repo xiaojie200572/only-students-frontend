@@ -23,6 +23,16 @@ export const messageApi = {
     return post<void>(`/message/read/${messageId}`)
   },
 
+  // 标记会话全部已读
+  markConversationAsRead: (conversationId: number) => {
+    return post<void>(`/message/conversation/${conversationId}/read-all`)
+  },
+
+  // 获取私信未读数
+  getUnreadCount: () => {
+    return get<number>('/message/unread-count')
+  },
+
   // 删除会话
   deleteConversation: (conversationId: number) => {
     return del<void>(`/message/conversation/${conversationId}`)

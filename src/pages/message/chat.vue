@@ -135,7 +135,7 @@ const maxReconnectAttempts = 5
 let reconnectTimer: ReturnType<typeof setTimeout> | null = null
 
 // 初始化页面
-onMounted(() => {
+onMounted(async () => {
   const pages = getCurrentPages()
   const currentPage = pages[pages.length - 1]
   const options = currentPage.options
@@ -156,6 +156,19 @@ onMounted(() => {
   // 如果有会话ID，加载历史消息
   if (conversationId.value) {
     loadMessages()
+    
+    // 标记会话消息为已读
+    try {
+      await messageApi.markConversationAsRead(conversationId.value)
+      // 通知上一页更新未读数
+      const pages = getCurrentPages()
+      const prevPage = pages[pages.length - 2]
+      if (prevPage) {
+        prevPage.$vm?.fetchUnreadCounts?.()
+      }
+    } catch (e) {
+      console.error('标记已读失败:', e)
+    }
   }
   
   // 连接WebSocket

@@ -83,6 +83,21 @@ export const favoriteApi = {
     return get<any[]>(url)
   },
 
+  // 获取我的笔记被收藏的记录（谁收藏了我的笔记）
+  getMyNoteFavorites: (page: number = 1, size: number = 20) => {
+    return get<any[]>(`/favorite/my-notifiers?page=${page}&size=${size}`)
+  },
+
+  // 获取我的笔记被收藏的未读数量
+  getMyNoteFavoriteUnreadCount: () => {
+    return get<number>('/favorite/my-notifiers/count')
+  },
+
+  // 标记收藏为已读
+  markFavoriteAsRead: (favoriteId: number) => {
+    return post<void>(`/favorite/my-notifiers/${favoriteId}/read`)
+  },
+
   // 获取收藏夹列表
   getFolders: () => {
     return get<any[]>('/favorite/folders')
@@ -200,6 +215,26 @@ export const commentApi = {
   // 获取评论详情（包含根评论和所有回复）
   getDetail: (commentId: number) => {
     return get<any>(`/comment/${commentId}`)
+  },
+
+  // 获取收到的评论（别人评论我的笔记）
+  getReceived: (page: number = 1, size: number = 20) => {
+    return get<any[]>(`/comment/received?page=${page}&size=${size}`)
+  },
+
+  // 获取发出的评论
+  getSent: (page: number = 1, size: number = 20) => {
+    return get<any[]>(`/comment/sent?page=${page}&size=${size}`)
+  },
+
+  // 获取收到的评论未读数
+  getReceivedCount: () => {
+    return get<number>('/comment/received/count')
+  },
+
+  // 标记评论为已读
+  markAsRead: (commentId: number) => {
+    return post<void>(`/comment/received/${commentId}/read`)
   }
 }
 

@@ -3,7 +3,7 @@
     <!-- 导航栏 -->
     <view class="page-nav">
       <view class="back-btn" @click="goBack">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M19 12H5M12 19l-7-7 7-7"/>
         </svg>
       </view>
@@ -11,93 +11,189 @@
       <view class="nav-right"></view>
     </view>
 
-    <!-- 加载状态 -->
-    <view v-if="loading" class="loading-state">
-      <view class="spinner"></view>
-      <text>加载中...</text>
-    </view>
-
-    <!-- 空状态 -->
-    <view v-else-if="!loading && conversations.length === 0 && notifications.length === 0" class="empty-state">
-      <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-        <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>
-      </svg>
-      <text class="empty-text">暂无消息</text>
-      <text class="empty-subtext">当有人给您发消息时，会显示在这里</text>
-    </view>
-
-    <!-- 消息列表 -->
-    <scroll-view v-else scroll-y class="message-list" @scrolltolower="loadMore">
-      <!-- 会话列表 -->
-      <view
-        v-for="conv in conversations"
-        :key="conv.id"
-        class="message-item"
-        @click="goToChat(conv)"
-      >
-        <view class="msg-avatar-wrapper">
-          <image 
-            :src="conv.targetUserAvatar || '/static/default-avatar.svg'" 
-            class="msg-avatar" 
-            mode="aspectFill"
-          />
-          <view v-if="conv.unreadCount > 0" class="msg-badge">
-            {{ conv.unreadCount > 99 ? '99+' : conv.unreadCount }}
-          </view>
-        </view>
-        <view class="msg-content">
-          <view class="msg-header">
-            <text class="msg-name">{{ conv.targetUserName }}</text>
-            <text class="msg-time">{{ formatTime(conv.lastMessageTime) }}</text>
-          </view>
-          <text class="msg-preview" :class="{ unread: conv.unreadCount > 0 }">
-            {{ conv.lastMessage }}
-          </text>
-        </view>
-      </view>
-
-      <!-- 系统通知 -->
-      <view v-if="notifications.length > 0" class="section-title">系统通知</view>
-      <view
-        v-for="notice in notifications"
-        :key="notice.id"
-        class="notice-item"
-        @click="handleNotificationClick(notice)"
-      >
-        <view class="notice-icon">
+    <!-- 消息类型入口 -->
+    <view class="message-entrance">
+      <view class="entrance-item" @click="goToPage('comment')">
+        <view class="entrance-icon comment-icon">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
-            <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
           </svg>
+          <view v-if="commentUnread > 0" class="entrance-badge">{{ commentUnread > 99 ? '99+' : commentUnread }}</view>
         </view>
-        <view class="notice-content">
-          <text class="notice-title">{{ notice.title }}</text>
-          <text class="notice-desc">{{ notice.content }}</text>
-          <text class="notice-time">{{ formatTime(notice.createdAt) }}</text>
+        <text class="entrance-label">评论</text>
+      </view>
+      
+      <view class="entrance-item" @click="goToPage('favorite')">
+        <view class="entrance-icon favorite-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
+          </svg>
+          <view v-if="favoriteUnread > 0" class="entrance-badge">{{ favoriteUnread > 99 ? '99+' : favoriteUnread }}</view>
         </view>
+        <text class="entrance-label">收藏</text>
       </view>
-
-      <!-- 加载更多 -->
-      <view v-if="hasMore" class="load-more">
-        <text>加载更多...</text>
+      
+      <view class="entrance-item" @click="goToPage('message')">
+        <view class="entrance-icon message-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+            <polyline points="22,6 12,13 2,6"/>
+          </svg>
+          <view v-if="messageUnread > 0" class="entrance-badge">{{ messageUnread > 99 ? '99+' : messageUnread }}</view>
+        </view>
+        <text class="entrance-label">私信</text>
       </view>
-    </scroll-view>
+      
+      <view class="entrance-item" @click="goToPage('follower')">
+        <view class="entrance-icon follower-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+            <circle cx="8.5" cy="7" r="4"/>
+            <line x1="20" y1="8" x2="20" y2="14"/>
+            <line x1="23" y1="11" x2="17" y2="11"/>
+          </svg>
+          <view v-if="followerUnread > 0" class="entrance-badge">{{ followerUnread > 99 ? '99+' : followerUnread }}</view>
+        </view>
+        <text class="entrance-label">新增粉丝</text>
+      </view>
+    </view>
 
+    <!-- 系统消息列表 -->
+    <view class="system-section">
+      <view class="section-header">
+        <text class="section-title">系统消息</text>
+      </view>
+      
+      <!-- 加载状态 -->
+      <view v-if="loading" class="loading-state">
+        <view class="spinner"></view>
+        <text>加载中...</text>
+      </view>
+      
+      <!-- 空状态 -->
+      <view v-else-if="!loading && systemMessages.length === 0" class="empty-state">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+          <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+        </svg>
+        <text class="empty-text">暂无系统消息</text>
+      </view>
+      
+      <!-- 系统消息列表 -->
+      <scroll-view v-else scroll-y class="system-list">
+        <view
+          v-for="notice in systemMessages"
+          :key="notice.id"
+          class="system-item"
+          :class="{ unread: !notice.isRead }"
+          @click="handleNoticeClick(notice)"
+        >
+          <view class="system-icon" :class="getNoticeTypeClass(notice.type)">
+            <svg v-if="notice.type === 1" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="12" y1="8" x2="12" y2="12"/>
+              <line x1="12" y1="16" x2="12.01" y2="16"/>
+            </svg>
+            <svg v-else-if="notice.type === 2" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
+            </svg>
+            <svg v-else-if="notice.type === 4" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+            </svg>
+            <svg v-else-if="notice.type === 3" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+            </svg>
+            <svg v-else width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+              <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+            </svg>
+          </view>
+          <view class="system-content">
+            <view class="system-header">
+              <text class="system-title">{{ notice.title }}</text>
+              <text class="system-time">{{ formatTime(notice.createdAt) }}</text>
+            </view>
+            <text class="system-desc">{{ notice.content }}</text>
+          </view>
+          <view v-if="!notice.isRead" class="unread-dot"></view>
+        </view>
+        
+        <!-- 加载更多 -->
+        <view v-if="hasMore" class="load-more">
+          <text>加载更多...</text>
+        </view>
+      </scroll-view>
+    </view>
   </view>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onActivated } from 'vue'
-import { messageApi, notificationApi } from '@/api/message'
-import type { Conversation, Notification } from '@/types/api.types'
+import { ref, onMounted, onUnmounted } from 'vue'
+import { notificationApi, messageApi } from '@/api/message'
+import { favoriteApi, commentApi } from '@/api/note'
+import type { Notification } from '@/types/api.types'
 
-// 数据状态
-const conversations = ref<Conversation[]>([])
-const notifications = ref<Notification[]>([])
+// 各种未读数
+const commentUnread = ref(0)
+const favoriteUnread = ref(0)
+const messageUnread = ref(0)
+const followerUnread = ref(0)
+
+// 系统消息
+const systemMessages = ref<Notification[]>([])
 const loading = ref(false)
 const hasMore = ref(true)
 const currentPage = ref(1)
 const pageSize = 20
+
+// SSE
+let eventSource: EventSource | null = null
+
+// 连接SSE获取实时未读数
+const connectSSE = () => {
+  const token = uni.getStorageSync('token')
+  const userId = uni.getStorageSync('userId')
+  if (!token || !userId) return
+  
+  // 使用本地通知服务端口
+  const url = `http://localhost:8009/notification/sse/subscribe?userId=${userId}&token=${token}`
+  eventSource = new EventSource(url)
+  
+  eventSource.onopen = () => {
+    console.log('SSE连接成功')
+  }
+  
+  eventSource.addEventListener('unread-count', (event) => {
+    try {
+      const data = JSON.parse(event.data)
+      console.log('收到未读数更新:', data)
+      // 重新获取未读数
+      fetchUnreadCounts()
+    } catch (e) {
+      console.error('解析未读数失败:', e)
+    }
+  })
+  
+  eventSource.addEventListener('notification', (event) => {
+    try {
+      const data = JSON.parse(event.data)
+      console.log('收到新通知:', data)
+      // 重新获取系统消息
+      fetchSystemMessages(true)
+      // 重新获取未读数
+      fetchUnreadCounts()
+    } catch (e) {
+      console.error('解析通知失败:', e)
+    }
+  })
+  
+  eventSource.onerror = (error) => {
+    console.error('SSE错误:', error)
+    eventSource?.close()
+    // 5秒后重连
+    setTimeout(connectSSE, 5000)
+  }
+}
 
 // 格式化时间
 const formatTime = (timeStr: string): string => {
@@ -106,78 +202,102 @@ const formatTime = (timeStr: string): string => {
   const now = new Date()
   const diff = now.getTime() - date.getTime()
   
-  // 小于1分钟
-  if (diff < 60000) {
-    return '刚刚'
-  }
-  // 小于1小时
-  if (diff < 3600000) {
-    return Math.floor(diff / 60000) + '分钟前'
-  }
-  // 小于24小时
-  if (diff < 86400000) {
-    return Math.floor(diff / 3600000) + '小时前'
-  }
-  // 小于7天
-  if (diff < 604800000) {
-    return Math.floor(diff / 86400000) + '天前'
-  }
-  // 超过7天显示日期
+  if (diff < 60000) return '刚刚'
+  if (diff < 3600000) return Math.floor(diff / 60000) + '分钟前'
+  if (diff < 86400000) return Math.floor(diff / 3600000) + '小时前'
+  if (diff < 604800000) return Math.floor(diff / 86400000) + '天前'
   return date.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' })
 }
 
-// 获取会话列表
-const fetchConversations = async () => {
-  try {
-    const data = await messageApi.getConversations()
-    conversations.value = data || []
-  } catch (error) {
-    console.error('获取会话列表失败:', error)
-    uni.showToast({ title: '获取消息失败', icon: 'none' })
+// 获取通知类型样式
+const getNoticeTypeClass = (type: number): string => {
+  switch (type) {
+    case 1: return 'system-type' // 系统
+    case 2: return 'subscribe-type' // 订阅
+    case 3: return 'comment-type' // 评论
+    case 4: return 'like-type' // 点赞
+    case 5: return 'favorite-type' // 收藏
+    default: return 'system-type'
   }
 }
 
-// 获取通知列表
-const fetchNotifications = async (refresh = false) => {
+// 跳转页面
+const goToPage = (type: string) => {
+  switch (type) {
+    case 'comment':
+      uni.navigateTo({ url: '/pages/message/comment-list' })
+      break
+    case 'favorite':
+      uni.navigateTo({ url: '/pages/message/favorite-notifiers' })
+      break
+    case 'message':
+      uni.navigateTo({ url: '/pages/message/conversation-list' })
+      break
+    case 'follower':
+      uni.navigateTo({ url: '/pages/user/my-subscribers' })
+      break
+  }
+}
+
+// 获取未读数
+const fetchUnreadCounts = async () => {
+  try {
+    // 获取评论未读数
+    try {
+      const commentCount = await commentApi.getReceivedCount()
+      commentUnread.value = commentCount || 0
+    } catch (e) {
+      commentUnread.value = 0
+    }
+    
+    // 获取我的笔记被收藏的未读数
+    try {
+      const favoriteCount = await favoriteApi.getMyNoteFavoriteUnreadCount()
+      favoriteUnread.value = favoriteCount || 0
+    } catch (e) {
+      favoriteUnread.value = 0
+    }
+    
+    // 获取私信未读数（会话列表未读总数）
+    try {
+      const conversations = await messageApi.getConversations()
+      messageUnread.value = conversations.reduce((sum, c) => sum + (c.unreadCount || 0), 0)
+    } catch (e) {
+      messageUnread.value = 0
+    }
+    
+    // 获取新增粉丝数（需要从订阅服务获取）
+    followerUnread.value = 0 // TODO: 需要订阅服务API支持
+  } catch (error) {
+    console.error('获取未读数失败:', error)
+  }
+}
+
+// 获取系统消息
+const fetchSystemMessages = async (refresh = false) => {
   if (refresh) {
     currentPage.value = 1
-    notifications.value = []
+    systemMessages.value = []
   }
   
+  loading.value = true
   try {
     const data = await notificationApi.getList(currentPage.value, pageSize)
     if (data && data.length > 0) {
-      notifications.value.push(...data)
+      systemMessages.value.push(...data)
       hasMore.value = data.length === pageSize
     } else {
       hasMore.value = false
     }
   } catch (error) {
-    console.error('获取通知列表失败:', error)
+    console.error('获取系统消息失败:', error)
+  } finally {
+    loading.value = false
   }
-}
-
-// 加载更多
-const loadMore = () => {
-  if (!hasMore.value || loading.value) return
-  currentPage.value++
-  fetchNotifications()
-}
-
-// 跳转到聊天页面
-const goToChat = (conv: Conversation) => {
-  // 标记会话为已读（减少未读数）
-  if (conv.unreadCount > 0) {
-    conv.unreadCount = 0
-  }
-  
-  uni.navigateTo({
-    url: `/pages/message/chat?id=${conv.id}&name=${encodeURIComponent(conv.targetUserName || conv.targetNickname)}&targetId=${conv.targetUserId}&avatar=${encodeURIComponent(conv.targetUserAvatar || '')}`
-  })
 }
 
 // 处理通知点击
-const handleNotificationClick = (notice: Notification) => {
+const handleNoticeClick = (notice: Notification) => {
   // 标记为已读
   if (!notice.isRead) {
     notificationApi.markAsRead(notice.id).then(() => {
@@ -187,7 +307,7 @@ const handleNotificationClick = (notice: Notification) => {
     })
   }
   
-  // 根据通知类型跳转到不同页面
+  // 根据通知类型跳转
   if (notice.targetId && notice.targetType) {
     switch (notice.targetType) {
       case 1: // 笔记
@@ -196,39 +316,30 @@ const handleNotificationClick = (notice: Notification) => {
       case 2: // 用户
         uni.navigateTo({ url: `/pages/user/profile?id=${notice.targetId}` })
         break
-      case 3: // 订单
-        uni.navigateTo({ url: '/pages/user/my-orders' })
+      case 3: // 评论
+        uni.navigateTo({ url: `/pages/note/comment-detail?commentId=${notice.targetId}` })
         break
     }
   }
 }
 
-// 返回上一页
 const goBack = () => {
   uni.navigateBack()
 }
 
-// 初始化数据
-const initData = async () => {
-  loading.value = true
-  try {
-    await Promise.all([
-      fetchConversations(),
-      fetchNotifications(true)
-    ])
-  } finally {
-    loading.value = false
-  }
-}
-
-// 页面加载时获取数据
+// 初始化
 onMounted(() => {
-  initData()
+  fetchUnreadCounts()
+  fetchSystemMessages(true)
+  connectSSE()
 })
 
-// 页面激活时刷新数据（从其他页面返回时）
-onActivated(() => {
-  fetchConversations()
+// 页面卸载时关闭SSE
+onUnmounted(() => {
+  if (eventSource) {
+    eventSource.close()
+    eventSource = null
+  }
 })
 </script>
 
@@ -245,30 +356,120 @@ onActivated(() => {
   left: 0;
   right: 0;
   height: 60px;
-  background: var(--bg-primary);
+  background: var(--bg-card);
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: space-between;
+  padding: 0 16px;
   border-bottom: 1px solid var(--border-light);
   z-index: 100;
 }
 
 .back-btn {
-  position: absolute;
-  left: 16px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 40px;
-  height: 40px;
+  width: 36px;
+  height: 36px;
   display: flex;
   align-items: center;
   justify-content: center;
   color: var(--text-primary);
+  background: var(--bg-secondary);
+  border-radius: 50%;
 }
 
 .nav-title {
   font-size: 18px;
   font-weight: 700;
+  color: var(--text-primary);
+}
+
+.nav-right {
+  width: 36px;
+}
+
+/* 消息类型入口 */
+.message-entrance {
+  display: flex;
+  padding: 16px;
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border-light);
+  gap: 16px;
+}
+
+.entrance-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.entrance-icon {
+  position: relative;
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.comment-icon {
+  background: var(--accent-warm);
+  color: white;
+}
+
+.favorite-icon {
+  background: var(--accent-warm);
+  color: white;
+}
+
+.message-icon {
+  background: var(--accent-warm);
+  color: white;
+}
+
+.follower-icon {
+  background: var(--accent-warm);
+  color: white;
+}
+
+.entrance-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  min-width: 18px;
+  height: 18px;
+  background: #FF3B30;
+  color: white;
+  font-size: 10px;
+  font-weight: 600;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 5px;
+}
+
+.entrance-label {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+/* 系统消息区域 */
+.system-section {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.section-header {
+  padding: 16px;
+  background: var(--bg-primary);
+}
+
+.section-title {
+  font-size: 16px;
+  font-weight: 600;
   color: var(--text-primary);
 }
 
@@ -282,13 +483,13 @@ onActivated(() => {
 }
 
 .spinner {
-  width: 32px;
-  height: 32px;
-  border: 3px solid var(--border-light);
+  width: 24px;
+  height: 24px;
+  border: 2px solid var(--border-light);
   border-top-color: var(--accent-warm);
   border-radius: 50%;
   animation: spin 1s linear infinite;
-  margin-bottom: 12px;
+  margin-bottom: 8px;
 }
 
 @keyframes spin {
@@ -305,161 +506,113 @@ onActivated(() => {
 }
 
 .empty-state svg {
-  margin-bottom: 16px;
+  margin-bottom: 12px;
   opacity: 0.5;
 }
 
 .empty-text {
-  font-size: 16px;
-  font-weight: 600;
-  color: var(--text-secondary);
-  margin-bottom: 8px;
-}
-
-.empty-subtext {
-  font-size: 13px;
-  color: var(--text-tertiary);
-}
-
-.message-list {
-  height: calc(100vh - 124px);
-}
-
-.message-item {
-  display: flex;
-  align-items: center;
-  padding: 16px;
-  background: var(--bg-card);
-  border-bottom: 1px solid var(--border-light);
-}
-
-.message-item:active {
-  background: var(--bg-secondary);
-}
-
-.msg-avatar-wrapper {
-  position: relative;
-  margin-right: 12px;
-}
-
-.msg-avatar {
-  width: 50px;
-  height: 50px;
-  border-radius: 50%;
-  background: var(--bg-secondary);
-}
-
-.msg-badge {
-  position: absolute;
-  top: -2px;
-  right: -2px;
-  min-width: 18px;
-  height: 18px;
-  background: var(--accent-coral);
-  color: white;
-  font-size: 11px;
-  font-weight: 600;
-  border-radius: 9px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0 5px;
-}
-
-.msg-content {
-  flex: 1;
-  overflow: hidden;
-}
-
-.msg-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 6px;
-}
-
-.msg-name {
-  font-size: 15px;
-  font-weight: 600;
-  color: var(--text-primary);
-}
-
-.msg-time {
-  font-size: 12px;
-  color: var(--text-tertiary);
-}
-
-.msg-preview {
-  font-size: 13px;
-  color: var(--text-secondary);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.msg-preview.unread {
-  color: var(--text-primary);
-  font-weight: 500;
-}
-
-.section-title {
   font-size: 14px;
-  font-weight: 600;
-  color: var(--text-tertiary);
-  padding: 20px 16px 12px;
-  background: var(--bg-primary);
 }
 
-.notice-item {
+.system-list {
+  flex: 1;
+  height: calc(100vh - 260px);
+}
+
+.system-item {
   display: flex;
+  align-items: flex-start;
   padding: 16px;
   background: var(--bg-card);
   border-bottom: 1px solid var(--border-light);
+  position: relative;
 }
 
-.notice-item:active {
+.system-item:active {
   background: var(--bg-secondary);
 }
 
-.notice-icon {
-  width: 44px;
-  height: 44px;
-  background: var(--bg-secondary);
+.system-item.unread {
+  background: var(--bg-card);
+}
+
+.system-icon {
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   margin-right: 12px;
-  color: var(--accent-warm);
   flex-shrink: 0;
 }
 
-.notice-content {
+.system-type {
+  background: #FFF3E0;
+  color: #FF9800;
+}
+
+.subscribe-type {
+  background: #E3F2FD;
+  color: #2196F3;
+}
+
+.comment-type {
+  background: #FFF3E0;
+  color: #FF9800;
+}
+
+.like-type {
+  background: #FCE4EC;
+  color: #E91E63;
+}
+
+.favorite-type {
+  background: #FFF8E1;
+  color: #FFC107;
+}
+
+.system-content {
   flex: 1;
   overflow: hidden;
 }
 
-.notice-title {
-  font-size: 15px;
+.system-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.system-title {
+  font-size: 14px;
   font-weight: 600;
   color: var(--text-primary);
-  display: block;
-  margin-bottom: 4px;
 }
 
-.notice-desc {
-  font-size: 13px;
-  color: var(--text-secondary);
-  display: block;
-  margin-bottom: 4px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.notice-time {
+.system-time {
   font-size: 11px;
   color: var(--text-tertiary);
+}
+
+.system-desc {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.unread-dot {
+  position: absolute;
+  top: 18px;
+  right: 16px;
+  width: 8px;
+  height: 8px;
+  background: #FF3B30;
+  border-radius: 50%;
 }
 
 .load-more {

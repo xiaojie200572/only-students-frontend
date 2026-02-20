@@ -389,7 +389,7 @@ const checkFileSize = (size: number): boolean => {
 
 // 检查总大小限制（20MB）
 const checkTotalSize = (): boolean => {
-  const totalSize = form.value.attachments.reduce((sum, file) => sum + (file.fileSize || 0), 0)
+  const totalSize = (form.value.attachments || []).reduce((sum, file) => sum + (file.fileSize || 0), 0)
   const maxTotal = 20 * 1024 * 1024 // 20MB
   if (totalSize > maxTotal) {
     uni.showToast({ title: '总大小不能超过20MB', icon: 'none' })
@@ -694,7 +694,7 @@ const handleSave = async () => {
   }
 }
 
-const handleDelete = () => {
+const handleDelete = async () => {
   if (!isEdit.value || !noteId.value) {
     uni.showToast({ title: '新笔记无法删除', icon: 'none' })
     return

@@ -1,0 +1,516 @@
+<template>
+  <view class="comment-list-page">
+    <!-- 导航栏 -->
+    <view class="page-nav">
+      <view class="back-btn" @click="goBack">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M19 12H5M12 19l-7-7 7-7"/>
+        </svg>
+      </view>
+      <text class="nav-title">评论</text>
+      <view class="nav-right"></view>
+    </view>
+
+    <!-- 标签栏 -->
+    <view class="tabs">
+      <view 
+        class="tab-item" 
+        :class="{ active: activeTab === 'received' }"
+        @click="switchTab('received')"
+      >
+        <text>收到的评论</text>
+        <view v-if="receivedUnread > 0" class="tab-badge">{{ receivedUnread }}</view>
+      </view>
+      <view 
+        class="tab-item" 
+        :class="{ active: activeTab === 'sent' }"
+        @click="switchTab('sent')"
+      >
+        <text>发出的评论</text>
+      </view>
+    </view>
+
+    <!-- 评论列表 -->
+    <scroll-view scroll-y class="comment-list" @scrolltolower="loadMore">
+      <!-- 加载状态 -->
+      <view v-if="loading && comments.length === 0" class="loading-state">
+        <view class="spinner"></view>
+        <text>加载中...</text>
+      </view>
+
+      <!-- 空状态 -->
+      <view v-else-if="!loading && comments.length === 0" class="empty-state">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+        </svg>
+        <text class="empty-text">{{ activeTab === 'received' ? '暂无收到评论' : '暂无发出评论' }}</text>
+      </view>
+
+      <!-- 评论列表 -->
+      <view v-else class="comment-items">
+        <view
+          v-for="comment in comments"
+          :key="comment.id"
+          class="comment-item"
+          :class="{ unread: !comment.isRead && activeTab === 'received' }"
+          @click="handleCommentClick(comment)"
+        >
+          <!-- 头像 -->
+          <image 
+            :src="comment.avatar || '/static/default-avatar.svg'" 
+            class="comment-avatar" 
+            mode="aspectFill"
+          />
+          
+          <!-- 内容 -->
+          <view class="comment-content">
+            <view class="comment-header">
+              <text class="comment-username">{{ comment.username || '用户' }}</text>
+              <text class="comment-time">{{ formatTime(comment.createdAt) }}</text>
+            </view>
+            
+            <!-- 收到的评论显示原文 -->
+            <view v-if="activeTab === 'received'" class="comment-original">
+              <text class="original-label">回复了我的笔记：</text>
+              <text class="original-content">{{ comment.note?.title || '笔记' }}</text>
+            </view>
+            
+            <text class="comment-text">{{ comment.content }}</text>
+            
+            <!-- 点赞 -->
+            <view class="comment-actions">
+              <view class="action-item" @click.stop="toggleLike(comment)">
+                <svg width="16" height="16" viewBox="0 0 24 24" :fill="comment.isLiked ? 'currentColor' : 'none'" stroke="currentColor" stroke-width="2">
+                  <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                </svg>
+                <text>{{ comment.likeCount || 0 }}</text>
+              </view>
+            </view>
+          </view>
+          
+          <!-- 笔记封面 -->
+          <image 
+            v-if="comment.note?.coverUrl" 
+            :src="comment.note.coverUrl" 
+            class="note-cover" 
+            mode="aspectFill"
+          />
+          
+          <!-- 未读红点 -->
+          <view v-if="!comment.isRead && activeTab === 'received'" class="unread-dot"></view>
+        </view>
+
+        <!-- 加载更多 -->
+        <view v-if="hasMore" class="load-more">
+          <text>{{ loading ? '加载中...' : '上拉加载更多' }}</text>
+        </view>
+      </view>
+    </scroll-view>
+  </view>
+</template>
+
+<script setup lang="ts">
+import { ref, onMounted } from 'vue'
+import { commentApi } from '@/api/note'
+import { useUserStore } from '@/stores/user'
+
+interface CommentWithUser {
+  id: number
+  userId: number
+  noteId: number
+  parentId?: number
+  content: string
+  likeCount: number
+  isLiked: boolean
+  isRead: boolean
+  createdAt: string
+  user?: {
+    id: number
+    username: string
+    nickname?: string
+    avatar?: string
+  }
+  note?: {
+    id: number
+    title: string
+    coverUrl?: string
+  }
+}
+
+const userStore = useUserStore()
+const activeTab = ref<'received' | 'sent'>('received')
+const comments = ref<CommentWithUser[]>([])
+const loading = ref(false)
+const hasMore = ref(true)
+const currentPage = ref(1)
+const pageSize = 20
+const receivedUnread = ref(0)
+
+const formatTime = (timeStr: string): string => {
+  if (!timeStr) return ''
+  const date = new Date(timeStr)
+  const now = new Date()
+  const diff = now.getTime() - date.getTime()
+  
+  if (diff < 60000) return '刚刚'
+  if (diff < 3600000) return Math.floor(diff / 60000) + '分钟前'
+  if (diff < 86400000) return Math.floor(diff / 3600000) + '小时前'
+  if (diff < 604800000) return Math.floor(diff / 86400000) + '天前'
+  return date.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' })
+}
+
+const switchTab = (tab: 'received' | 'sent') => {
+  if (activeTab.value !== tab) {
+    activeTab.value = tab
+    currentPage.value = 1
+    comments.value = []
+    fetchComments(true)
+  }
+}
+
+const fetchComments = async (refresh = false) => {
+  if (loading.value) return
+  
+  loading.value = true
+  try {
+    if (activeTab.value === 'received') {
+      const data = await commentApi.getReceived(currentPage.value, pageSize)
+      if (data && data.length > 0) {
+        comments.value.push(...data)
+        hasMore.value = data.length === pageSize
+      } else {
+        hasMore.value = false
+      }
+    } else {
+      const data = await commentApi.getSent(currentPage.value, pageSize)
+      if (data && data.length > 0) {
+        comments.value.push(...data)
+        hasMore.value = data.length === pageSize
+      } else {
+        hasMore.value = false
+      }
+    }
+  } catch (error) {
+    console.error('获取评论失败:', error)
+    uni.showToast({ title: '加载失败', icon: 'none' })
+  } finally {
+    loading.value = false
+  }
+}
+
+const loadMore = () => {
+  if (!loading.value && hasMore.value) {
+    currentPage.value++
+    fetchComments()
+  }
+}
+
+const handleCommentClick = async (comment: CommentWithUser) => {
+  // 标记已读
+  if (!comment.isRead && activeTab.value === 'received') {
+    try {
+      await commentApi.markAsRead(comment.id)
+      comment.isRead = true
+      receivedUnread.value = Math.max(0, receivedUnread.value - 1)
+    } catch (e) {
+      console.error('标记已读失败:', e)
+    }
+  }
+  
+  // 跳转到笔记详情
+  if (comment.noteId) {
+    uni.navigateTo({ 
+      url: `/pages/note/detail?id=${comment.noteId}` 
+    })
+  }
+}
+
+const toggleLike = async (comment: CommentWithUser) => {
+  try {
+    if (comment.isLiked) {
+      await commentApi.unlikeComment(comment.id)
+      comment.isLiked = false
+      comment.likeCount = Math.max(0, (comment.likeCount || 0) - 1)
+    } else {
+      await commentApi.likeComment(comment.id)
+      comment.isLiked = true
+      comment.likeCount = (comment.likeCount || 0) + 1
+    }
+  } catch (error) {
+    console.error('操作失败:', error)
+  }
+}
+
+const goBack = () => {
+  uni.navigateBack()
+}
+
+onMounted(async () => {
+  fetchComments(true)
+  // 获取未读数
+  try {
+    const count = await commentApi.getReceivedCount()
+    receivedUnread.value = count || 0
+  } catch (e) {
+    console.error('获取未读数失败:', e)
+  }
+})
+</script>
+
+<style scoped>
+.comment-list-page {
+  min-height: 100vh;
+  background: var(--bg-primary);
+  padding-top: 50px;
+}
+
+.page-nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 50px;
+  background: var(--bg-card);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  border-bottom: 1px solid var(--border-light);
+  z-index: 100;
+}
+
+.back-btn {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-primary);
+  background: var(--bg-secondary);
+  border-radius: 50%;
+}
+
+.nav-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.nav-right {
+  width: 36px;
+}
+
+.tabs {
+  display: flex;
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border-light);
+  padding: 0 16px;
+}
+
+.tab-item {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 14px 0;
+  font-size: 14px;
+  color: var(--text-secondary);
+  position: relative;
+}
+
+.tab-item.active {
+  color: var(--accent-warm);
+  font-weight: 600;
+}
+
+.tab-item.active::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 20%;
+  right: 20%;
+  height: 2px;
+  background: var(--accent-warm);
+  border-radius: 1px;
+}
+
+.tab-badge {
+  min-width: 16px;
+  height: 16px;
+  background: #FF3B30;
+  color: white;
+  font-size: 10px;
+  font-weight: 600;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 4px;
+}
+
+.comment-list {
+  height: calc(100vh - 110px);
+  padding: 8px 0;
+}
+
+.loading-state,
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  color: var(--text-tertiary);
+}
+
+.spinner {
+  width: 24px;
+  height: 24px;
+  border: 2px solid var(--border-light);
+  border-top-color: var(--accent-warm);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 8px;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.empty-state svg {
+  margin-bottom: 12px;
+  opacity: 0.5;
+}
+
+.empty-text {
+  font-size: 14px;
+}
+
+.comment-items {
+  padding: 0;
+}
+
+.comment-item {
+  display: flex;
+  padding: 16px;
+  margin: 0;
+  border-bottom: 1px solid var(--border-light);
+  position: relative;
+  background: var(--bg-primary);
+}
+
+/* 移除点击变暗效果，改用简单的反馈 */
+.comment-item:active {
+  opacity: 0.7;
+}
+
+.comment-item.unread {
+  /* 未读状态不再改变背景色 */
+}
+
+.comment-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  margin-right: 12px;
+}
+
+.comment-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.comment-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.comment-username {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.comment-time {
+  font-size: 11px;
+  color: var(--text-tertiary);
+}
+
+.comment-original {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 6px;
+  font-size: 12px;
+}
+
+.original-label {
+  color: var(--text-tertiary);
+}
+
+.original-content {
+  color: var(--text-secondary);
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.comment-text {
+  font-size: 14px;
+  color: var(--text-primary);
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.comment-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-top: 8px;
+}
+
+.action-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--text-tertiary);
+  font-size: 12px;
+}
+
+.action-item:active {
+  color: var(--accent-warm);
+}
+
+.note-cover {
+  width: 50px;
+  height: 50px;
+  border-radius: 8px;
+  flex-shrink: 0;
+  margin-left: 8px;
+}
+
+.unread-dot {
+  position: absolute;
+  top: 18px;
+  right: 0;
+  width: 8px;
+  height: 8px;
+  background: #FF3B30;
+  border-radius: 50%;
+}
+
+.load-more {
+  text-align: center;
+  padding: 16px;
+  color: var(--text-tertiary);
+  font-size: 13px;
+}
+</style>

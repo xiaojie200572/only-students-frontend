@@ -148,6 +148,27 @@
       }
     },
     {
+      "path": "pages/message/conversation-list",
+      "style": {
+        "navigationBarTitleText": "私信",
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/message/comment-list",
+      "style": {
+        "navigationBarTitleText": "评论",
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/message/favorite-notifiers",
+      "style": {
+        "navigationBarTitleText": "收藏",
+        "navigationStyle": "custom"
+      }
+    },
+    {
       "path": "pages/note/comment-detail",
       "style": {
         "navigationBarTitleText": "评论详情",
