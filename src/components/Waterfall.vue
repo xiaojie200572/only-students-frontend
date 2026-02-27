@@ -55,15 +55,15 @@ const handleNoteClick = (note: Note) => {
 <style scoped>
 .waterfall-wrapper {
   display: flex;
-  gap: 12px;
-  padding: 12px;
+  gap: 8px;
+  padding: 8px;
 }
 
 .waterfall-column {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 8px;
 }
 
 .waterfall-item {

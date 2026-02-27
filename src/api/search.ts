@@ -18,6 +18,11 @@ export const searchApi = {
     return get<PageResult<Note>>('/search/notes/by-tag', { tag, page, size })
   },
 
+  // 按学校搜索笔记
+  searchBySchool: (schoolId: number, page: number = 1, size: number = 20) => {
+    return get<PageResult<Note>>('/search/notes/by-school', { schoolId, page, size })
+  },
+
   // 获取热门搜索关键词
   getHotKeywords: (limit: number = 10) => {
     return get<PageResult<string>>('/search/hot-keywords', { limit })

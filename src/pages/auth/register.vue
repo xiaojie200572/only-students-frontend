@@ -102,6 +102,16 @@
           </picker>
         </view>
 
+        <!-- 学校（可选） -->
+        <view class="form-item">
+          <input
+            type="text"
+            v-model="form.schoolName"
+            placeholder="学校名称（选填）"
+            class="form-input"
+          />
+        </view>
+
         <view class="agreement">
           <checkbox :checked="agreed" @click="agreed = !agreed" />
           <text>我已阅读并同意</text>
@@ -192,7 +202,8 @@ const form = ref({
   password: '',
   confirmPassword: '',
   nickname: '',
-  educationLevel: null as number | null
+  educationLevel: null as number | null,
+  schoolName: ''
 })
 
 const errors = ref({
@@ -331,7 +342,8 @@ const handleRegister = async () => {
     smsCode: form.value.smsCode,
     password: form.value.password,
     nickname: form.value.nickname,
-    educationLevel: form.value.educationLevel || undefined
+    educationLevel: form.value.educationLevel || undefined,
+    schoolName: form.value.schoolName || undefined
   })
 
   loading.value = false

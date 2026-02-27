@@ -48,22 +48,6 @@
         </view>
       </view>
 
-      <!-- 热门学科 -->
-      <view class="section" v-if="!isSearching || !searchKeyword">
-        <text class="section-title">热门学科</text>
-        <view class="category-grid">
-          <view
-            v-for="cat in categories"
-            :key="cat.id"
-            class="category-item"
-            @click="searchByCategory(cat)"
-          >
-            <text class="category-icon">{{ cat.icon }}</text>
-            <text class="category-name">{{ cat.name }}</text>
-          </view>
-        </view>
-      </view>
-
       <!-- 搜索提示 -->
       <view v-if="isSearching && searchKeyword" class="search-hint">
         <text>按回车键搜索"{{ searchKeyword }}"</text>
@@ -424,12 +408,6 @@ const searchByKeyword = (keyword: string) => {
   startSearch()
 }
 
-// 按分类搜索
-const searchByCategory = (cat: { id: number; name: string }) => {
-  searchKeyword.value = cat.name
-  startSearch()
-}
-
 // 跳转到用户主页
 const goToUserProfile = (userId: number) => {
   uni.navigateTo({ url: `/pages/user/profile?id=${userId}` })
@@ -599,31 +577,6 @@ onMounted(() => {
 .tag-rank.top {
   color: white;
   background: var(--accent-coral);
-}
-
-/* 学科分类 */
-.category-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 12px;
-}
-
-.category-item {
-  background: var(--bg-secondary);
-  border-radius: 10px;
-  padding: 12px 8px;
-  text-align: center;
-}
-
-.category-icon {
-  font-size: 24px;
-  display: block;
-  margin-bottom: 4px;
-}
-
-.category-name {
-  font-size: 12px;
-  color: var(--text-secondary);
 }
 
 /* 搜索提示 */

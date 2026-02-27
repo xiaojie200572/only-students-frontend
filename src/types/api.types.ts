@@ -55,6 +55,7 @@ export interface RegisterRequest {
   nickname: string
   educationLevel?: number
   schoolId?: number
+  schoolName?: string
 }
 
 export type SendCodeType = 'REGISTER' | 'LOGIN' | 'RESET_PASSWORD' | 'BIND'
@@ -85,8 +86,6 @@ export interface Note {
   title: string
   content: string
   coverImage?: string
-  categoryId: number
-  categoryName?: string
   visibility: number
   price: number
   isFree: boolean
@@ -116,7 +115,6 @@ export interface Note {
 export interface CreateNoteRequest {
   title: string
   content: string
-  categoryId: number
   visibility: number
   price?: number
   educationLevel?: number
@@ -129,7 +127,6 @@ export interface CreateNoteRequest {
 export interface UpdateNoteRequest {
   title?: string
   content?: string
-  categoryId?: number
   visibility?: number
   price?: number
   tags?: string[]
@@ -138,7 +135,6 @@ export interface UpdateNoteRequest {
 // 搜索参数
 export interface SearchParams {
   keyword?: string
-  categoryId?: number
   educationLevel?: number
   priceType?: number // 0-全部 1-免费 2-付费
   sortType?: number  // 0-最新 1-最热

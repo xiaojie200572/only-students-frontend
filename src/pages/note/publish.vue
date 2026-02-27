@@ -120,22 +120,6 @@
         <text class="char-count">{{ form.content.length }}/500</text>
       </view>
 
-      <!-- 分类 -->
-      <view class="section">
-        <text class="section-title">选择分类</text>
-        <view class="category-list">
-          <view
-            v-for="cat in categories"
-            :key="cat.id"
-            :class="['category-item', { active: form.categoryId === cat.id }]"
-            @click="selectCategory(cat.id)"
-          >
-            <text class="category-icon">{{ cat.icon }}</text>
-            <text class="category-name">{{ cat.name }}</text>
-          </view>
-        </view>
-      </view>
-
       <!-- 标签 -->
       <view class="section">
         <text class="section-title">添加标签</text>
@@ -278,7 +262,6 @@ const isEdit = ref(!!noteId.value)
 const form = ref({
   title: '',
   content: '',
-  categoryId: null as number | null,
   tags: [] as string[],
   visibility: 0,
   price: '',
@@ -325,7 +308,6 @@ onMounted(async () => {
       const note = await noteApi.getById(noteId.value)
       form.value.title = note.title
       form.value.content = note.content
-      form.value.categoryId = note.categoryId
       form.value.tags = note.tags || []
       form.value.visibility = note.visibility
       form.value.price = note.price ? String(note.price) : ''
@@ -570,10 +552,6 @@ const formatFileSize = (size: number): string => {
   return (size / (1024 * 1024 * 1024)).toFixed(1) + ' GB'
 }
 
-const selectCategory = (id: number) => {
-  form.value.categoryId = id
-}
-
 const addTag = () => {
   const tag = tagInput.value.trim()
   if (tag && form.value.tags.length < 5 && !form.value.tags.includes(tag)) {
@@ -620,11 +598,6 @@ const handleSave = async () => {
     return
   }
 
-  if (!form.value.categoryId) {
-    uni.showToast({ title: '请选择分类', icon: 'none' })
-    return
-  }
-
   loading.value = true
 
   try {
@@ -650,7 +623,6 @@ const handleSave = async () => {
     const noteData = {
       title: form.value.title,
       content: form.value.content,
-      categoryId: form.value.categoryId,
       visibility: form.value.visibility,
       price: (form.value.visibility === 2 || form.value.visibility === 3) ? (parseFloat(form.value.price) || 0) : 0,
       tags: form.value.tags,
@@ -991,34 +963,6 @@ const goBack = () => {
   color: var(--text-primary);
   margin-bottom: 12px;
   display: block;
-}
-
-.category-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-}
-
-.category-item {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  padding: 8px 14px;
-  background: var(--bg-secondary);
-  border-radius: 20px;
-  font-size: 13px;
-  color: var(--text-secondary);
-  border: 1px solid var(--border-light);
-}
-
-.category-item.active {
-  background: var(--accent-warm);
-  color: white;
-  border-color: var(--accent-warm);
-}
-
-.category-icon {
-  font-size: 14px;
 }
 
 .tags-input {

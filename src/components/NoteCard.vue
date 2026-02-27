@@ -15,10 +15,7 @@
           <text class="default-cover-icon">📝</text>
           <text class="default-cover-text">学习笔记</text>
         </view>
-      </view>
-
-      <!-- 分类标签 -->
-      <view class="category-tag">{{ note.categoryName }}</view>
+        </view>
 
       <!-- 评分标签 -->
       <view v-if="note.averageRating !== undefined && note.averageRating !== null" class="rating-tag">
@@ -255,17 +252,5 @@ const formatNumber = (num: number): string => {
   overflow: hidden;
   text-overflow: ellipsis;
   max-width: 100%;
-}
-
-.category-tag {
-  position: absolute;
-  top: 8px;
-  left: 8px;
-  background: var(--accent-warm);
-  color: white;
-  font-size: 10px;
-  font-weight: 600;
-  padding: 3px 8px;
-  border-radius: 4px;
 }
 </style>
