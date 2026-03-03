@@ -1,0 +1,16 @@
+<svg width="200" height="200" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <!-- 背景 -->
+  <rect width="200" height="200" fill="#F5F3EE"/>
+  
+  <!-- 头像圆形背景 -->
+  <circle cx="100" cy="100" r="80" fill="#E8E6E1"/>
+  
+  <!-- 人物轮廓 -->
+  <circle cx="100" cy="80" r="30" fill="#D4CFC4"/>
+  <ellipse cx="100" cy="145" rx="45" ry="35" fill="#D4CFC4"/>
+  
+  <!-- 简单的面部特征 -->
+  <circle cx="90" cy="75" r="3" fill="#B8B3A8"/>
+  <circle cx="110" cy="75" r="3" fill="#B8B3A8"/>
+  <path d="M 90 90 Q 100 95 110 90" stroke="#B8B3A8" stroke-width="2" fill="none"/>
+</svg>
