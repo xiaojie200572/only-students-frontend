@@ -43,6 +43,13 @@
       }
     },
     {
+      "path": "pages/discover/hot-rank",
+      "style": {
+        "navigationBarTitleText": "热搜榜单",
+        "navigationStyle": "custom"
+      }
+    },
+    {
       "path": "pages/message/index",
       "style": {
         "navigationBarTitleText": "消息",

@@ -213,7 +213,7 @@ const formatNumber = (num: number): string => {
 .stat-item {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 12px;
   font-size: 11px;
   color: var(--text-tertiary);
 }

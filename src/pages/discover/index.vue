@@ -1,23 +1,23 @@
 <template>
   <view class="search-page">
-    <!-- 搜索栏 -->
+    <!-- 顶部搜索框 -->
     <view class="search-header">
-      <view class="search-box">
+      <view class="search-bar">
         <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <circle cx="11" cy="11" r="8"/>
-          <path d="M21 21l-4.35-4.35"/>
+          <circle cx="11" cy="11" r="8" />
+          <path d="M21 21l-4.35-4.35" />
         </svg>
-        <input
-          type="text"
-          class="search-input"
-          placeholder="搜索笔记、用户..."
-          v-model="searchKeyword"
-          @confirm="startSearch"
+        <input 
+          type="text" 
+          class="search-input" 
+          placeholder="搜索笔记、创作者..." 
+          v-model="searchKeyword" 
           @focus="onSearchFocus"
+          @confirm="startSearch"
         />
-        <text v-if="searchKeyword" class="clear-btn" @click="clearSearch">×</text>
+        <text v-if="searchKeyword" class="clear-btn" @click="searchKeyword = ''">×</text>
       </view>
-      <text class="cancel-btn" v-if="showCancel" @click="cancelSearch">取消</text>
+      <text v-if="hasSearched" class="cancel-btn" @click="cancelSearch">取消</text>
     </view>
 
     <!-- 未搜索状态：显示热门和分类 -->
@@ -25,25 +25,23 @@
       <!-- 热门搜索 -->
       <view class="section" v-if="!isSearching || !searchKeyword">
         <view class="section-header">
-          <text class="section-title">热门搜索</text>
-          <text class="refresh-btn" @click="fetchHotTags">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <polyline points="23 4 23 10 17 10"/>
-              <polyline points="1 20 1 14 7 14"/>
-              <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+          <text class="section-title">热搜榜单</text>
+          <view class="view-all-btn" @click="goToHotRank">
+            <text>查看完整榜单</text>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M9 18l6-6-6-6"/>
             </svg>
-            换一换
-          </text>
+          </view>
         </view>
         <view class="hot-tags">
           <view
-            v-for="(tag, index) in hotTags"
+            v-for="(tag, index) in hotTags.slice(0, 10)"
             :key="index"
             class="hot-tag"
             @click="searchByKeyword(tag)"
           >
             <text class="tag-rank" :class="{ top: index < 3 }">{{ index + 1 }}</text>
-            {{ tag }}
+            <text class="tag-text">{{ tag }}</text>
           </view>
         </view>
       </view>
@@ -257,6 +255,11 @@ const hasSearched = ref(false)
 const currentTab = ref('all')
 const loading = ref(false)
 
+// 热搜榜单弹窗
+const showRankListModal = ref(false)
+
+// 跳转至热搜榜单页面
+
 // 搜索结果
 const noteResults = ref<Note[]>([])
 const userResults = ref<UserInfo[]>([])
@@ -278,11 +281,18 @@ const tabs = [
 // 获取热门搜索
 const fetchHotTags = async () => {
   try {
-    const data = await searchApi.getHotKeywords(10)
+    const data = await searchApi.getHotKeywords(30)
     hotTags.value = data.list || []
   } catch (error) {
     console.error('获取热门搜索失败:', error)
   }
+}
+
+// 跳转至热搜榜单页面
+const goToHotRank = () => {
+  uni.navigateTo({
+    url: '/pages/discover/hot-rank'
+  })
 }
 
 // 搜索框聚焦
@@ -463,58 +473,72 @@ onMounted(() => {
 
 /* 搜索头部 */
 .search-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 60px;
+  background: var(--bg-primary);
   display: flex;
   align-items: center;
-  padding: 8px 12px;
-  background: var(--bg-card);
-  border-bottom: 1px solid var(--border-light);
+  padding: 8px 16px;
+  z-index: 100;
+  gap: 10px;
 }
 
-.search-box {
+.search-bar {
   flex: 1;
+  height: 36px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-light);
+  border-radius: 18px;
   display: flex;
   align-items: center;
-    border: 1px solid var(--border-light);
-  background: var(--bg-secondary);
-  border-radius: 18px;
-  padding: 0 12px;
-  height: 36px;
+  padding: 0 14px 0 36px;
+  position: relative;
 }
 
-.search-icon {
-  width: 18px;
-  height: 18px;
+.search-bar .search-icon {
+  position: absolute;
+  left: 12px;
+  width: 16px;
+  height: 16px;
   color: var(--text-tertiary);
-  margin-right: 8px;
+  flex-shrink: 0;
 }
 
-.search-input {
+.search-bar .search-input {
   flex: 1;
   height: 100%;
-  font-size: 14px;
+  font-size: 13px;
   color: var(--text-primary);
   background: transparent;
   border: none;
+  outline: none;
 }
 
-.clear-btn {
-  padding: 4px;
+.search-bar .search-input::placeholder {
   color: var(--text-tertiary);
-  font-size: 18px;
-  cursor: pointer;
+}
+
+.search-bar .clear-btn {
+  font-size: 16px;
+  color: var(--text-tertiary);
+  padding: 4px;
 }
 
 .cancel-btn {
-  margin-left: 12px;
   font-size: 14px;
   color: var(--text-secondary);
-  cursor: pointer;
 }
+
+
 
 /* 区块 */
 .section {
+  margin-top: 60px;
   padding: 16px;
-  background: var(--bg-card);
+  background: var(--bg-primary);
   margin-bottom: 8px;
 }
 
@@ -529,6 +553,14 @@ onMounted(() => {
   font-size: 15px;
   font-weight: 600;
   color: var(--text-primary);
+}
+
+.view-all-btn {
+  font-size: 12px;
+  color: var(--accent-warm);
+  display: flex;
+  align-items: center;
+  gap: 2px;
 }
 
 .refresh-btn {
@@ -552,14 +584,22 @@ onMounted(() => {
 }
 
 .hot-tag {
+  width: calc(50% - 4px);
   background: var(--bg-secondary);
   color: var(--text-secondary);
   font-size: 13px;
-  padding: 6px 10px;
-  border-radius: 16px;
+  padding: 8px 10px;
+  border-radius: 8px;
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
+  box-sizing: border-box;
+}
+
+.tag-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .tag-rank {
@@ -582,6 +622,7 @@ onMounted(() => {
 
 /* 搜索提示 */
 .search-hint {
+  margin-top: 60px;
   text-align: center;
   padding: 40px;
   color: var(--text-tertiary);
@@ -590,11 +631,12 @@ onMounted(() => {
 
 /* 结果 Tab */
 .result-tabs {
+  margin-top: 60px;
   display: flex;
-  background: var(--bg-card);
+  background: var(--bg-primary);
   border-bottom: 1px solid var(--border-light);
   position: sticky;
-  top: 0;
+  top: 60px;
   z-index: 10;
 }
 
@@ -650,12 +692,12 @@ onMounted(() => {
 
 /* 结果列表 */
 .result-list {
-  height: calc(100vh - 140px);
+  height: calc(100vh - 200px);
 }
 
 .result-section {
   padding: 12px 16px;
-  background: var(--bg-card);
+  background: var(--bg-primary);
   margin-bottom: 8px;
 }
 
