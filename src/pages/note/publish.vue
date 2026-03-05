@@ -37,12 +37,12 @@
       <view class="attachments-section">
         <text class="section-label">笔记附件</text>
         <text class="attachments-hint">支持图片、文档格式（最多20个，总大小不超过20MB）</text>
-        
+
         <!-- 附件网格 -->
         <view class="attachments-grid">
           <!-- 已上传的附件 -->
-          <view 
-            v-for="(file, index) in form.attachments" 
+          <view
+            v-for="(file, index) in form.attachments"
             :key="file.fileId || index"
             class="attachment-item"
           >
@@ -76,11 +76,11 @@
               </view>
             </view>
           </view>
-          
+
           <!-- 添加按钮 -->
-          <view 
-            v-if="form.attachments.length < 20" 
-            class="attachment-add-btn" 
+          <view
+            v-if="form.attachments.length < 20"
+            class="attachment-add-btn"
             @click="chooseFiles"
           >
             <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -90,7 +90,7 @@
             <text class="add-text">添加</text>
           </view>
         </view>
-        
+
         <!-- 上传进度提示 -->
         <view v-if="uploadingCount > 0" class="uploading-hint">
           <text>正在上传 {{ uploadingCount }} 个文件...</text>
@@ -196,7 +196,6 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useNoteStore } from '@/stores/note'
-import { NOTE_CATEGORIES } from '@/config/api.config'
 import { noteApi } from '@/api/note'
 import { useUserStore } from '@/stores/user'
 import { API_BASE_URL } from '@/config/api.config'
@@ -289,7 +288,6 @@ const getFileIcon = (fileType: string) => {
 
 const tagInput = ref('')
 const loading = ref(false)
-const categories = NOTE_CATEGORIES
 
 // 如果是编辑模式，加载现有笔记数据
 onMounted(async () => {
@@ -299,7 +297,7 @@ onMounted(async () => {
     const refererPage = pages[pages.length - 2]
     uni.setStorageSync('publish_referer', '/' + refererPage.route)
   }
-  
+
   // 避免重复加载数据（防止覆盖用户的编辑）
   // 只有当表单为空时才加载（说明是首次进入）
   if (isEdit.value && noteId.value && form.value.attachments.length === 0 && !form.value.title) {
@@ -311,12 +309,12 @@ onMounted(async () => {
       form.value.tags = note.tags || []
       form.value.visibility = note.visibility
       form.value.price = note.price ? String(note.price) : ''
-      
+
       // 加载附件列表
       if (note.attachments) {
         try {
-          const attachments = typeof note.attachments === 'string' 
-            ? JSON.parse(note.attachments) 
+          const attachments = typeof note.attachments === 'string'
+            ? JSON.parse(note.attachments)
             : note.attachments
           form.value.attachments = attachments || []
           // 保存原始附件列表的副本（用于保存时对比）
@@ -351,7 +349,7 @@ const removeAttachment = async (index: number) => {
     content: '确定要删除这个附件吗？点击保存后才会真正删除。',
     confirmColor: '#F44336'
   })
-  
+
   if (confirmed) {
     // 从表单中移除（仅本地）
     form.value.attachments.splice(index, 1)
@@ -422,29 +420,29 @@ const uploadFiles = async (files: any[]) => {
     const size = file.size || 0
     return checkFileSize(size)
   })
-  
+
   if (validFiles.length === 0) return
 
   uploadingCount.value = validFiles.length
-  
+
   for (const file of validFiles) {
     if (form.value.attachments.length >= 20) {
       uni.showToast({ title: '已达到最大附件数', icon: 'none' })
       break
     }
-    
+
     try {
       let result: any
-      
+
       // #ifdef H5
       const rawFile = file.raw || file
       result = await uploadNoteFileH5(rawFile, form.value.visibility)
       // #endif
-      
+
       // #ifndef H5
       result = await uploadNoteFile(file.path, form.value.visibility)
       // #endif
-      
+
       form.value.attachments.push({
         fileId: result.fileId,
         fileName: result.originalName || result.fileName,
@@ -459,7 +457,7 @@ const uploadFiles = async (files: any[]) => {
       uploadingCount.value--
     }
   }
-  
+
   if (uploadingCount.value === 0) {
     uni.showToast({ title: '上传完成', icon: 'success' })
   }
@@ -470,20 +468,20 @@ const uploadNoteFileH5 = (file: any, visibility: number): Promise<any> => {
   return new Promise((resolve, reject) => {
     const token = uni.getStorageSync('token')
     const userId = uni.getStorageSync('userId')
-    
+
     const formData = new FormData()
     formData.append('file', file)
-    
+
     const xhr = new XMLHttpRequest()
     xhr.open('POST', `${API_BASE_URL}/file/upload-for-note?visibility=${visibility}`, true)
-    
+
     if (token) {
       xhr.setRequestHeader('Authorization', `Bearer ${token}`)
     }
     if (userId) {
       xhr.setRequestHeader('X-User-Id', String(userId))
     }
-    
+
     xhr.onload = function() {
       if (xhr.status === 200) {
         const data = JSON.parse(xhr.responseText)
@@ -496,7 +494,7 @@ const uploadNoteFileH5 = (file: any, visibility: number): Promise<any> => {
         reject(xhr.responseText)
       }
     }
-    
+
     xhr.onerror = reject
     xhr.send(formData)
   })
@@ -505,21 +503,21 @@ const uploadPrivateFileH5 = (file: any): Promise<any> => {
   return new Promise((resolve, reject) => {
     const token = uni.getStorageSync('token')
     const userId = uni.getStorageSync('userId')
-    
+
     const formData = new FormData()
     formData.append('file', file.raw || file)
     formData.append('category', 'PRIVATE')
-    
+
     const xhr = new XMLHttpRequest()
     xhr.open('POST', `${API_BASE_URL}/file/upload`, true)
-    
+
     if (token) {
       xhr.setRequestHeader('Authorization', `Bearer ${token}`)
     }
     if (userId) {
       xhr.setRequestHeader('X-User-Id', String(userId))
     }
-    
+
     xhr.onload = function() {
       if (xhr.status === 200) {
         const data = JSON.parse(xhr.responseText)
@@ -534,12 +532,12 @@ const uploadPrivateFileH5 = (file: any): Promise<any> => {
         reject(xhr.responseText)
       }
     }
-    
+
     xhr.onerror = function(err) {
       console.error('上传失败:', err)
       reject(err)
     }
-    
+
     xhr.send(formData)
   })
 }
@@ -605,7 +603,7 @@ const handleSave = async () => {
     if (isEdit.value && noteId.value) {
       const currentFileIds = new Set(form.value.attachments.map((att: any) => att.fileId).filter(Boolean))
       const deletedAttachments = originalAttachments.value.filter((att: any) => att.fileId && !currentFileIds.has(att.fileId))
-      
+
       if (deletedAttachments.length > 0) {
         // 并行删除所有被移除的附件文件
         await Promise.all(deletedAttachments.map(async (att: any) => {
@@ -648,10 +646,10 @@ const handleSave = async () => {
     setTimeout(() => {
       // 发送全局事件通知列表页刷新
       uni.$emit('notes-updated')
-      
+
       // 设置刷新标记（备用方案）
       uni.setStorageSync('need_refresh_notes', true)
-      
+
       uni.navigateBack({
         success: () => {
           uni.showToast({ title: '保存成功', icon: 'success', duration: 1500 })
@@ -677,7 +675,7 @@ const handleDelete = async () => {
     content: '确定要删除这篇笔记吗？此操作不可恢复。',
     confirmColor: '#F44336'
   })
-  
+
   if (confirmed) {
     try {
       await noteApi.delete(noteId.value!)
@@ -694,7 +692,7 @@ const handleDelete = async () => {
 
 const goBack = () => {
   const pages = getCurrentPages()
-  
+
   if (pages.length > 1) {
     uni.navigateBack({ delta: 1 })
   } else {

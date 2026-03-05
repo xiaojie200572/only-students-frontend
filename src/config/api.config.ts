@@ -8,19 +8,6 @@ export const HEADERS = {
   CONTENT_TYPE: 'Content-Type'
 }
 
-// 笔记分类
-export const NOTE_CATEGORIES = [
-  { id: 1, name: '数学', icon: '📐' },
-  { id: 2, name: '物理', icon: '⚛️' },
-  { id: 3, name: '化学', icon: '⚗️' },
-  { id: 4, name: '英语', icon: '🔤' },
-  { id: 5, name: '语文', icon: '📚' },
-  { id: 6, name: '编程', icon: '💻' },
-  { id: 7, name: '考研', icon: '🎓' },
-  { id: 8, name: '高考', icon: '📝' },
-  { id: 9, name: '其他', icon: '📖' }
-]
-
 // 笔记可见性
 export enum NoteVisibility {
   PUBLIC = 0,      // 公开

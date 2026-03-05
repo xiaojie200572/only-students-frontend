@@ -41,8 +41,7 @@
           />
           <view class="subscriber-info">
             <view class="subscriber-name-row">
-              <text class="subscriber-nickname">{{ sub.subscriberNickname || sub.subscriberName }}</text>
-              <text class="subscriber-username">@{{ sub.subscriberUsername || sub.subscriberName }}</text>
+              <text class="subscriber-nickname">{{ sub.subscriberNickname }}</text>
             </view>
             <text v-if="sub.subscriberBio" class="subscriber-bio">{{ sub.subscriberBio }}</text>
             <text v-else class="subscriber-bio empty">暂无介绍</text>

@@ -1,27 +1,21 @@
 <template>
   <view class="creator-profile-page">
     <!-- 自定义弹窗 -->
-    <CustomModal
-      :visible="modalVisible"
-      :title="modalTitle"
-      :content="modalContent"
-      :confirm-text="modalConfirmText"
-      :cancel-text="modalCancelText"
-      :show-cancel="modalShowCancel"
-      :confirm-color="modalConfirmColor"
-      @confirm="handleModalConfirm"
-      @cancel="handleModalCancel"
-      @close="handleModalCancel"
-    />
+    <CustomModal :visible="modalVisible" :title="modalTitle" :content="modalContent" :confirm-text="modalConfirmText"
+      :cancel-text="modalCancelText" :show-cancel="modalShowCancel" :confirm-color="modalConfirmColor"
+      @confirm="handleModalConfirm" @cancel="handleModalCancel" @close="handleModalCancel" />
 
     <view class="page-nav">
       <view class="back-btn" @click="goBack">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M19 12H5M12 19l-7-7 7-7"/>
+          <path d="M19 12H5M12 19l-7-7 7-7" />
         </svg>
       </view>
       <text class="nav-title">创作者主页</text>
-      <view class="nav-right"></view>
+      <view class="nav-right" @click="goToReport" v-if="!isSelf">
+        <text>举报</text>
+      </view>
+      <view class="nav-right" v-else></view>
     </view>
 
     <scroll-view scroll-y class="content-area">
@@ -34,13 +28,9 @@
         <!-- 创作者信息卡片 -->
         <view class="creator-card">
           <view class="creator-header">
-            <image
-              :src="creator.avatar || '/static/default-avatar.svg'"
-              class="creator-avatar"
-              mode="aspectFill"
-            />
+            <image :src="creator.avatar || '/static/default-avatar.svg'" class="creator-avatar" mode="aspectFill" />
             <view class="creator-info">
-              <text class="creator-name">{{ creator.nickname || creator.username }}</text>
+              <text class="creator-name">{{ creator.nickname }}</text>
               <text v-if="creator.schoolName" class="creator-school">{{ creator.schoolName }}</text>
               <text class="creator-bio">{{ creator.bio || '这个人很懒，还没有简介' }}</text>
             </view>
@@ -81,13 +71,8 @@
             <text>暂无笔记</text>
           </view>
           <view v-else class="notes-grid">
-            <view
-              v-for="note in notes"
-              :key="note.id"
-              class="note-item"
-              @click="goToNote(note.id)"
-            >
-              <image v-if="note.coverImage" :src="note.coverImage" class="note-cover" mode="aspectFill"/>
+            <view v-for="note in notes" :key="note.id" class="note-item" @click="goToNote(note.id)">
+              <image v-if="note.coverImage" :src="note.coverImage" class="note-cover" mode="aspectFill" />
               <view v-else class="note-cover-placeholder">
                 <text class="placeholder-text">笔记</text>
               </view>
@@ -96,14 +81,15 @@
                 <view class="note-meta">
                   <text class="note-stats">
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                      <circle cx="12" cy="12" r="3"/>
+                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                      <circle cx="12" cy="12" r="3" />
                     </svg>
                     {{ note.viewCount }}
                   </text>
                   <text class="note-stats">
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                      <path
+                        d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
                     </svg>
                     {{ note.likeCount }}
                   </text>
@@ -179,6 +165,12 @@ const handleModalCancel = () => {
   }
 }
 
+const goToReport = () => {
+  uni.navigateTo({
+    url: `/pages/report/submit?targetType=3&targetId=${creatorId.value}`
+  })
+}
+
 const creator = ref<UserInfo | null>(null)
 const notes = ref<any[]>([])
 const stats = ref({
@@ -194,7 +186,7 @@ const creatorId = ref<number>(0)
 onMounted(() => {
   const pages = getCurrentPages()
   const currentPage = pages[pages.length - 1]
-  const id = currentPage.options?.id
+  const id = currentPage.option.id
 
   if (id) {
     creatorId.value = parseInt(id)
@@ -214,7 +206,7 @@ const loadCreatorData = async () => {
     const [userRes, notesRes, checkRes] = await Promise.all([
       get<UserInfo>(`/user/${creatorId.value}`),
       get<any[]>(`/note/user/${creatorId.value}`),
-      get(`/subscription/check/${creatorId.value}`).catch(() => false)
+      get<boolean>(`/subscription/check/${creatorId.value}`).catch(() => false)
     ])
 
     creator.value = userRes
@@ -256,7 +248,7 @@ const toggleSubscribe = async () => {
       title: '提示',
       content: '确定要取消订阅吗？'
     })
-    
+
     if (confirmed) {
       try {
         await del(`/subscription/${creatorId.value}`)
@@ -281,9 +273,9 @@ const subscribe = async () => {
 
   const confirmed = await showModal({
     title: '订阅确认',
-    content: `确定要订阅 ${creator.value?.nickname || creator.value?.username} 吗？`
+    content: `确定要订阅 ${creator.value?.nickname} 吗？`
   })
-  
+
   if (confirmed) {
     try {
       await post('/subscription', { creatorId: creatorId.value })
@@ -306,7 +298,7 @@ const sendMessage = () => {
   // 跳转到聊天页面，传递目标用户ID和名称
   // chat页面会根据targetId加载或创建会话
   uni.navigateTo({
-    url: `/pages/message/chat?targetId=${creatorId.value}&name=${encodeURIComponent(creator.value?.nickname || creator.value?.username)}&avatar=${encodeURIComponent(creator.value?.avatar || '')}`
+    url: `/pages/message/chat?targetId=${creatorId.value}&name=${encodeURIComponent(creator.value?.nickname || '')}&avatar=${encodeURIComponent(creator.value?.avatar || '')}`
   })
 }
 
@@ -356,7 +348,14 @@ const goBack = () => {
 }
 
 .nav-right {
-  width: 40px;
+  width: auto;
+  min-width: 40px;
+  height: 40px;
+  padding: 0 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #999;
 }
 
 .content-area {
@@ -383,7 +382,9 @@ const goBack = () => {
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .error-state {

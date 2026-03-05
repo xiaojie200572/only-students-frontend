@@ -7,23 +7,50 @@ export const useThemeStore = defineStore('theme', () => {
   
   // 初始化时读取本地存储
   const initTheme = () => {
-    const savedTheme = uni.getStorageSync('theme')
-    if (savedTheme) {
-      isDark.value = savedTheme === 'dark'
-    } else {
-      // 根据系统偏好
-      isDark.value = uni.getSystemInfoSync().theme === 'dark'
-    }
-    applyTheme()
+    // 延迟执行确保 DOM 准备好
+    setTimeout(() => {
+      console.log('DEBUG: Theme store initialized at', new Date().toLocaleTimeString())
+      const savedTheme = uni.getStorageSync('theme')
+      if (savedTheme) {
+        isDark.value = savedTheme === 'dark'
+      } else {
+        try {
+          isDark.value = uni.getSystemInfoSync().theme === 'dark'
+        } catch (e) {
+          isDark.value = false
+        }
+      }
+      applyTheme()
+    }, 100)
   }
   
   // 应用主题
   const applyTheme = () => {
     const theme = isDark.value ? 'dark' : 'light'
     uni.setStorageSync('theme', theme)
-    // #ifdef H5
-    document.documentElement.setAttribute('data-theme', theme)
-    // #endif
+    
+    // 添加到 documentElement 和 page 元素
+    if (typeof document !== 'undefined') {
+      const html = document.documentElement
+      const body = document.body
+      
+      // 清除所有主题类
+      html?.classList.remove('theme-light', 'theme-dark')
+      body?.classList.remove('theme-light', 'theme-dark')
+      
+      // 给 html 和 body 都添加主题类
+      html?.classList.add(`theme-${theme}`)
+      body?.classList.add(`theme-${theme}`)
+      
+      // 找到 uni-app 的 page 元素并添加类
+      const pages = document.querySelectorAll('page')
+      pages.forEach(p => {
+        p.classList.remove('theme-light', 'theme-dark')
+        p.classList.add(`theme-${theme}`)
+      })
+      
+      console.log('Theme applied:', theme, 'isDark:', isDark.value)
+    }
   }
   
   // 切换主题

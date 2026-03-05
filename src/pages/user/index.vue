@@ -44,7 +44,7 @@
         <view class="user-header">
           <image class="user-avatar" :src="userInfo?.avatar || '/static/default-avatar.svg'" mode="aspectFill"/>
           <view class="user-info">
-            <text class="user-name">{{ userInfo?.nickname || userInfo?.username || '用户' }}</text>
+            <text class="user-name">{{ userInfo?.nickname|| '用户' }}</text>
             <text class="user-id">ID: {{ userInfo?.id }}</text>
             <text v-if="userInfo?.schoolName" class="user-school">{{ userInfo.schoolName }}</text>
           </view>
@@ -325,7 +325,7 @@ const loadUserData = async () => {
     } else {
       console.log('用户数据为空')
     }
-    
+
     wallet.value = walletRes
     stats.value.noteCount = notesRes?.length || 0
     stats.value.subscriptionCount = subscriptionsRes?.length || 0
@@ -417,7 +417,7 @@ const logout = async () => {
     title: '提示',
     content: '确定要退出登录吗？'
   })
-  
+
   if (confirmed) {
     userStore.logout()
     uni.showToast({ title: '已退出登录', icon: 'success' })

@@ -39,7 +39,6 @@
           <view class="creator-info">
             <view class="creator-name-row">
               <text class="creator-nickname">{{ sub.creatorNickname || sub.creatorName }}</text>
-              <text class="creator-username">@{{ sub.creatorUsername || sub.creatorName }}</text>
             </view>
             <text v-if="sub.creatorBio" class="creator-bio">{{ sub.creatorBio }}</text>
             <text v-else class="creator-bio empty">暂无介绍</text>

@@ -8,21 +8,20 @@ import "./styles/theme.css";
 export function createApp() {
   const app = createSSRApp(App);
   const pinia = createPinia();
-  
   app.use(pinia);
-  
+
   // 初始化用户和主题
   const initApp = () => {
     const userStore = useUserStore();
     const themeStore = useThemeStore();
-    
+
     userStore.initUser();
     themeStore.initTheme();
   };
-  
+
   // 延迟初始化，确保pinia已就绪
   setTimeout(initApp, 0);
-  
+
   return {
     app,
   };

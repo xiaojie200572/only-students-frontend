@@ -31,8 +31,8 @@
           </view>
         </view>
         <scroll-view scroll-y class="folder-modal-list">
-          <view 
-            v-for="folder in folders" 
+          <view
+            v-for="folder in folders"
             :key="folder.id"
             class="folder-modal-item"
             :class="{ active: currentFolderId === folder.id }"
@@ -55,47 +55,6 @@
       </view>
     </view>
 
-    <!-- 其他弹窗（如分享成功） -->
-    <CustomModal
-      :visible="modalVisible"
-      :title="modalTitle"
-      :content="modalContent"
-      :confirm-text="modalConfirmText"
-      :cancel-text="modalCancelText"
-      :show-cancel="modalShowCancel"
-      :confirm-color="modalConfirmColor"
-      @confirm="handleModalConfirm"
-      @cancel="handleModalCancel"
-      @close="handleModalCancel"
-    />
-
-    <!-- 更多操作底部弹窗 -->
-    <view v-if="showActionSheet" class="action-sheet-mask" @click="closeActionSheet">
-      <view class="action-sheet-panel" @click.stop>
-        <view class="action-sheet-header">
-          <text class="action-sheet-title">更多操作</text>
-        </view>
-        <view class="action-sheet-list">
-          <view 
-            v-for="item in actionSheetItems" 
-            :key="item.value"
-            class="action-sheet-item"
-            @click="handleActionClick(item)"
-          >
-            <view class="action-sheet-icon">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path :d="item.icon"/>
-              </svg>
-            </view>
-            <text class="action-sheet-label">{{ item.label }}</text>
-          </view>
-        </view>
-        <view class="action-sheet-cancel" @click="closeActionSheet">
-          <text>取消</text>
-        </view>
-      </view>
-    </view>
-
     <!-- 导航栏 -->
     <view class="detail-nav">
       <view class="back-btn" @click="goBack">
@@ -104,12 +63,8 @@
         </svg>
       </view>
       <text class="nav-title">笔记详情</text>
-      <view class="more-btn" @click="showMoreActions">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <circle cx="12" cy="12" r="1"/>
-          <circle cx="19" cy="12" r="1"/>
-          <circle cx="5" cy="12" r="1"/>
-        </svg>
+      <view class="more-btn" @click="goToReportNote">
+        <text>举报</text>
       </view>
     </view>
 
@@ -128,18 +83,18 @@
           </view>
         </view>
         <!-- 多张图片使用 swiper -->
-        <swiper 
+        <swiper
           v-else
-          class="media-swiper" 
-          :indicator-dots="true" 
-          :autoplay="false" 
+          class="media-swiper"
+          :indicator-dots="true"
+          :autoplay="false"
           :circular="true"
           indicator-color="rgba(255, 255, 255, 0.4)"
           indicator-active-color="#fff"
           @change="onSwiperChange"
         >
-          <swiper-item 
-            v-for="(img, index) in noteImages" 
+          <swiper-item
+            v-for="(img, index) in noteImages"
             :key="index"
             @click="handleMediaClick(index)"
           >
@@ -157,18 +112,17 @@
       <!-- 整个可见区域的马赛克遮罩 -->
       <view v-if="!isVisible" class="full-mosaic-wrapper">
         <view class="full-mosaic-overlay"></view>
-        
+
         <!-- 保留用户信息可点击进入主页 -->
         <view class="user-info-section" @tap="goToAuthor(note.userId)" hover-class="user-info-hover" :hover-stay-time="100">
-          <image 
-            v-if="note.authorAvatar" 
-            :src="note.authorAvatar" 
+          <image
+            v-if="note.authorAvatar"
+            :src="note.authorAvatar"
             class="user-avatar"
             mode="aspectFill"
           />
           <view class="user-info">
-            <text class="user-nickname">{{ note.authorNickname || note.authorName }}</text>
-            <text class="user-username">@{{ note.authorUsername || '用户' + note.userId }}</text>
+<text class="user-nickname">{{ note.authorNickname}}</text>
           </view>
           <view class="user-info-right">
             <text class="publish-time">{{ formatTime(note.createdAt) }}</text>
@@ -234,9 +188,9 @@
             </view>
             <text class="preview-counter">{{ currentPreviewIndex + 1 }} / {{ imageCount }}</text>
           </view>
-          
-          <swiper 
-            class="preview-swiper" 
+
+          <swiper
+            class="preview-swiper"
             :current="currentPreviewIndex"
             :autoplay="false"
             @change="onPreviewSwiperChange"
@@ -245,10 +199,10 @@
               <image :src="img.url" mode="aspectFit" class="preview-image"/>
             </swiper-item>
           </swiper>
-          
+
           <view class="preview-indicator">
-            <view 
-              v-for="(img, index) in imageList" 
+            <view
+              v-for="(img, index) in imageList"
               :key="index"
               :class="['preview-dot', { active: index === currentPreviewIndex }]"
             />
@@ -257,15 +211,14 @@
 
         <!-- 用户信息区域 -->
         <view class="user-info-section" @tap="goToAuthor(note.userId)" hover-class="user-info-hover" :hover-stay-time="100">
-          <image 
-            v-if="note.authorAvatar" 
-            :src="note.authorAvatar" 
+          <image
+            v-if="note.authorAvatar"
+            :src="note.authorAvatar"
             class="user-avatar"
             mode="aspectFill"
           />
           <view class="user-info">
-            <text class="user-nickname">{{ note.authorNickname || note.authorName }}</text>
-            <text class="user-username">@{{ note.authorUsername || '用户' + note.userId }}</text>
+<text class="user-nickname">{{ note.authorNickname}}</text>
           </view>
           <view class="user-info-right">
             <text class="publish-time">{{ formatTime(note.createdAt) }}</text>
@@ -370,8 +323,7 @@
             <view class="comment-content">
               <view class="comment-header">
                 <view class="comment-user-info" @click.stop="goToUserProfile(comment.userId)">
-                  <text class="comment-nickname">{{ comment.nickname || comment.username }}</text>
-                  <text class="comment-username">@{{ comment.username }}</text>
+                  <text class="comment-nickname">{{ comment.nickname }}</text>
                 </view>
                 <text class="comment-time">{{ formatTime(comment.createdAt) }}</text>
               </view>
@@ -390,7 +342,10 @@
                   <text>{{ comment.replyCount || 0 }}</text>
                 </view>
                 <view class="comment-action" @click="goToCommentDetail(comment)">
-                  <text>查看详情</text>
+                  <text>详情</text>
+                </view>
+                <view class="comment-action" @click.stop="reportComment(comment)">
+                  <text style="color: #999;">举报</text>
                 </view>
               </view>
             </view>
@@ -469,7 +424,7 @@
       <view class="comment-input-box">
         <textarea
           v-model="commentContent"
-          :placeholder="replyTo ? `回复 ${replyTo.username}:` : '写评论...'"
+          :placeholder="replyTo ? `回复 ${replyTo.userNickname}:` : '写评论...'"
           class="comment-textarea"
           :focus="showCommentInput"
           maxlength="500"
@@ -495,7 +450,6 @@ import { noteApi, favoriteApi, ratingApi, shareApi, commentApi } from '@/api/not
 import { subscriptionApi, paymentApi } from '@/api/message'
 import { getFilePreviewUrl, getFileConvertStatus } from '@/api/file'
 import { useUserStore } from '@/stores/user'
-import CustomModal from '@/components/CustomModal.vue'
 import type { Note } from '@/types/api.types'
 
 const userStore = useUserStore()
@@ -542,7 +496,7 @@ const selectFolder = async (folder: Folder) => {
   currentFolderId.value = folder.id
   closeFolderSelector()
   closeFavoriteSuccessModal()
-  
+
   // 调用API将笔记移动到选定的收藏夹
   try {
     await favoriteApi.moveToFolderByNoteId(noteId.value, folder.id as number)
@@ -562,42 +516,21 @@ const showModal = (options: {
   confirmColor?: string
 }): Promise<boolean> => {
   return new Promise((resolve) => {
-    modalTitle.value = options.title || ''
-    modalContent.value = options.content || ''
-    modalConfirmText.value = options.confirmText || '确定'
-    modalCancelText.value = options.cancelText || '取消'
-    modalShowCancel.value = options.showCancel !== false
-    modalConfirmColor.value = options.confirmColor || ''
-    modalResolve = resolve
-    modalVisible.value = true
+    uni.showModal({
+      title: options.title || '',
+      content: options.content || '',
+      confirmText: options.confirmText || '确定',
+      cancelText: options.cancelText || '取消',
+      showCancel: options.showCancel !== false,
+      confirmColor: options.confirmColor || '#E07B54',
+      success: (res) => {
+        resolve(res.confirm)
+      },
+      fail: () => {
+        resolve(false)
+      }
+    })
   })
-}
-
-// 处理弹窗确认
-const handleModalConfirm = () => {
-  // 如果是收藏成功弹窗，点击"修改文件夹"跳转到收藏页面
-  if (currentModalType === 'favoriteSuccess') {
-    modalVisible.value = false
-    currentModalType = ''
-    uni.navigateTo({ url: '/pages/user/my-favorites' })
-    return
-  }
-  
-  modalVisible.value = false
-  if (modalResolve) {
-    modalResolve(true)
-    modalResolve = null
-  }
-}
-
-// 处理弹窗取消
-const handleModalCancel = () => {
-  currentModalType = ''
-  modalVisible.value = false
-  if (modalResolve) {
-    modalResolve(false)
-    modalResolve = null
-  }
 }
 
 // 显示收藏成功弹窗
@@ -634,15 +567,15 @@ const isSelf = computed(() => {
 const isVisible = computed(() => {
   if (!note.value) return true
   if (isSelf.value) return true
-  
+
   const visibility = note.value.visibility
-  
+
   if (visibility === 0) return true
   if (visibility === 1) return isSubscribed.value
   if (visibility === 2) return isPurchased.value
   if (visibility === 3) return isSubscribed.value && isPurchased.value
   if (visibility === 4) return false
-  
+
   return true
 })
 
@@ -663,11 +596,11 @@ const noteImages = computed(() => {
           const type = (att.fileType || '').toLowerCase()
           const fileId = Number(att.fileId)
           const convStatus = fileId ? convertStatus.value[fileId] : null
-          
+
           // 图片类型
           if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp'].includes(type)) {
-            const url = fileId && previewUrls.value[fileId] 
-              ? previewUrls.value[fileId] 
+            const url = fileId && previewUrls.value[fileId]
+              ? previewUrls.value[fileId]
               : att.fileUrl
             images.push({ url, isPdf: false })
           }
@@ -713,7 +646,7 @@ const noteAttachments = computed(() => {
           const type = (att.fileType || '').toLowerCase()
           const fileId = Number(att.fileId)
           const convStatus = fileId ? convertStatus.value[fileId] : null
-          
+
           // 图片和已转换的PDF不在附件列表显示
           if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp'].includes(type)) {
             return false
@@ -729,14 +662,14 @@ const noteAttachments = computed(() => {
               return false
             }
             // 未转换的显示在附件列表
-            att.previewUrl = fileId && previewUrls.value[fileId] 
-              ? previewUrls.value[fileId] 
+            att.previewUrl = fileId && previewUrls.value[fileId]
+              ? previewUrls.value[fileId]
               : att.fileUrl
             return true
           }
           // 其他文件显示在附件列表
-          att.previewUrl = fileId && previewUrls.value[fileId] 
-            ? previewUrls.value[fileId] 
+          att.previewUrl = fileId && previewUrls.value[fileId]
+            ? previewUrls.value[fileId]
             : att.fileUrl
           return true
         })
@@ -762,13 +695,6 @@ const showFullscreenPreview = ref(false)
 const currentPreviewIndex = ref(0)
 const currentSwiperIndex = ref(0)
 
-// 更多操作弹窗
-const showActionSheet = ref(false)
-const actionSheetItems = ref([
-  { label: '举报', value: 'report', icon: 'M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0zM12 9v4M12 17h.01' },
-  { label: '分享', value: 'share', icon: 'M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8M16 6l-4-4-4 4M12 2v13' }
-])
-
 // 只显示图片的数量（不含PDF）
 const imageCount = computed(() => {
   return noteImages.value.filter(img => !img.isPdf).length
@@ -782,9 +708,9 @@ const imageList = computed(() => {
 // 处理媒体点击
 const handleMediaClick = (index: number) => {
   if (!isVisible.value) return
-  
+
   const item = noteImages.value[index]
-  
+
   if (item.isPdf) {
     // PDF 文件预览
     // #ifdef H5
@@ -883,13 +809,13 @@ const loadNoteDetail = async () => {
 
 const loadPreviewUrls = async () => {
   if (!note.value?.attachments) return
-  
+
   try {
     let attachments = note.value.attachments
     if (typeof attachments === 'string') {
       attachments = JSON.parse(attachments)
     }
-    
+
     if (Array.isArray(attachments)) {
       // 先获取所有附件的转换状态
       const statusPromises = attachments
@@ -903,12 +829,12 @@ const loadPreviewUrls = async () => {
             return { fileId: att.fileId, status: 0, pdfFileId: null }
           }
         })
-      
+
       const statusResults = await Promise.all(statusPromises)
       statusResults.forEach((item) => {
-        convertStatus.value[Number(item.fileId)] = { 
-          status: item.status, 
-          pdfFileId: item.pdfFileId ? Number(item.pdfFileId) : null 
+        convertStatus.value[Number(item.fileId)] = {
+          status: item.status,
+          pdfFileId: item.pdfFileId ? Number(item.pdfFileId) : null
         }
       })
 
@@ -921,7 +847,7 @@ const loadPreviewUrls = async () => {
       statusResults.forEach((item) => {
         if (item.pdfFileId) allFileIds.add(Number(item.pdfFileId))
       })
-      
+
       const urlPromises = Array.from(allFileIds).map(async (fileId) => {
         try {
           const previewUrl = await getFilePreviewUrl(fileId)
@@ -931,7 +857,7 @@ const loadPreviewUrls = async () => {
           return { fileId, url: '' }
         }
       })
-      
+
       const results = await Promise.all(urlPromises)
       results.forEach((item) => {
         previewUrls.value[item.fileId] = item.url
@@ -1111,109 +1037,17 @@ const goToCommentDetail = (comment: any) => {
 }
 
 const goToUserProfile = (userId: number) => {
-  if (!userId) return
-  uni.navigateTo({
-    url: `/pages/user/profile?id=${userId}`
-  })
-}
-
-const likeComment = async (comment: any) => {
-  if (!userStore.isLoggedIn) {
-    uni.navigateTo({ url: '/pages/auth/login' })
-    return
-  }
-
-  try {
-    if (comment.isLiked) {
-      await commentApi.unlikeComment(comment.id)
-      comment.isLiked = false
-      comment.likeCount--
-    } else {
-      await commentApi.likeComment(comment.id)
-      comment.isLiked = true
-      comment.likeCount++
-    }
-  } catch (error) {
-    uni.showToast({ title: '操作失败', icon: 'none' })
-  }
-}
-
-const toggleSubscribe = async () => {
-  if (!userStore.isLoggedIn) {
-    uni.navigateTo({ url: '/pages/auth/login' })
-    return
-  }
-
-  try {
-    if (isSubscribed.value) {
-      await subscriptionApi.unsubscribe(note.value!.userId)
-      isSubscribed.value = false
-      uni.showToast({ title: '已取消订阅', icon: 'none' })
-    } else {
-      await subscriptionApi.subscribe(note.value!.userId)
-      isSubscribed.value = true
-      uni.showToast({ title: '订阅成功', icon: 'success' })
-    }
-  } catch (error) {
-    uni.showToast({ title: '操作失败', icon: 'none' })
-  }
-}
-
-const buyNote = () => {
-  uni.showToast({ title: '购买功能开发中', icon: 'none' })
-}
-
-const subscribeCreator = () => {
-  toggleSubscribe()
-}
-
-const getPaywallTitle = () => {
-  if (!note.value) return '继续阅读'
-  switch (note.value.visibility) {
-    case 1: return '订阅可见'
-    case 2: return '付费内容'
-    case 3: return '订阅后可付费'
-    case 4: return '私密笔记'
-    default: return '继续阅读'
-  }
-}
-
-const getPaywallDesc = () => {
-  if (!note.value) return '订阅创作者或购买此笔记解锁完整内容'
-  switch (note.value.visibility) {
-    case 1: return '订阅创作者后可查看完整内容'
-    case 2: return '购买此笔记解锁完整内容'
-    case 3: return '订阅创作者并购买后可查看完整内容'
-    case 4: return '只有作者本人可以查看'
-    default: return '订阅创作者或购买此笔记解锁完整内容'
-  }
-}
-
-const goToAuthor = (userId: number) => {
-  if (isSelf.value) {
+  if (userId === userStore.userInfo?.id) {
     uni.showToast({ title: '这是你自己', icon: 'none' })
     return
   }
   uni.navigateTo({ url: `/pages/user/profile?id=${userId}` })
 }
 
-const showMoreActions = () => {
-  showActionSheet.value = true
-}
-
-const closeActionSheet = () => {
-  showActionSheet.value = false
-}
-
-const handleActionClick = (item: any) => {
-  closeActionSheet()
-  if (item.value === 'report') {
-    uni.navigateTo({
-      url: `/pages/report/submit?targetType=1&targetId=${noteId.value}`
-    })
-  } else if (item.value === 'share') {
-    shareNote()
-  }
+const goToReportNote = () => {
+  uni.navigateTo({
+    url: `/pages/report/submit?targetType=1&targetId=${noteId.value}`
+  })
 }
 
 // 下载文件
@@ -1222,7 +1056,7 @@ const downloadFile = (att: any) => {
   // #ifdef H5
   window.open(url, '_blank')
   // #endif
-  
+
   // #ifndef H5
   uni.downloadFile({
     url: url,
@@ -1249,7 +1083,7 @@ const downloadFile = (att: any) => {
 
 const goBack = () => {
   const pages = getCurrentPages()
-  
+
   if (pages.length > 1) {
     // 有页面栈，直接返回
     uni.navigateBack({ delta: 1 })
@@ -1257,7 +1091,7 @@ const goBack = () => {
     // 刷新后没有页面栈，使用保存的来源页面
     const referer = uni.getStorageSync('detail_referer')
     const listPages = ['/pages/index/index', '/pages/discover/index', '/pages/user/my-favorites', '/pages/user/my-notes', '/pages/user/my-subscriptions', '/pages/user/profile']
-    
+
     if (referer && listPages.some(p => referer.includes(p))) {
       uni.reLaunch({ url: referer })
     } else {
@@ -1464,7 +1298,7 @@ const formatTime = (time: string) => {
   left: 0;
   right: 0;
   height: 50px;
-  background: var(--bg-card);
+  background: var(--bg-primary);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -1475,19 +1309,24 @@ const formatTime = (time: string) => {
 }
 
 .back-btn, .more-btn {
-  width: 36px;
+  width: auto;
+  min-width: 36px;
   height: 36px;
+  padding: 0 10px;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--text-primary);
-  background: var(--bg-secondary);
-  border-radius: 50%;
-  transition: background var(--transition-fast);
+  color: #999;
+  transition: color var(--transition-fast);
 }
 
 .back-btn:active, .more-btn:active {
-  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.report-text {
+  color: #999;
+  font-size: 13px;
 }
 
 .nav-title {
@@ -1515,7 +1354,7 @@ const formatTime = (time: string) => {
   bottom: 0;
   z-index: 10;
   pointer-events: none;
-  background: 
+  background:
     linear-gradient(
       to bottom,
       rgba(0, 0, 0, 0.3) 0%,
@@ -2248,97 +2087,5 @@ const formatTime = (time: string) => {
 .download-icon {
   color: var(--text-tertiary);
   flex-shrink: 0;
-}
-
-/* 底部操作弹窗 */
-.action-sheet-mask {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  z-index: 1000;
-  animation: fadeIn 0.2s ease;
-}
-
-.action-sheet-panel {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  background: var(--bg-card);
-  border-radius: 20px 20px 0 0;
-  padding-bottom: env(safe-area-inset-bottom);
-  animation: slideUp 0.3s ease;
-  z-index: 1001;
-}
-
-.action-sheet-header {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 16px 20px;
-  border-bottom: 1px solid var(--border-light);
-}
-
-.action-sheet-title {
-  font-size: 15px;
-  font-weight: 600;
-  color: var(--text-primary);
-}
-
-.action-sheet-list {
-  padding: 8px 0;
-}
-
-.action-sheet-item {
-  display: flex;
-  align-items: center;
-  padding: 14px 20px;
-  gap: 12px;
-  cursor: pointer;
-  transition: background var(--transition-fast);
-}
-
-.action-sheet-item:active {
-  background: var(--bg-secondary);
-}
-
-.action-sheet-icon {
-  width: 36px;
-  height: 36px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--bg-secondary);
-  border-radius: 50%;
-  color: var(--text-secondary);
-}
-
-.action-sheet-label {
-  flex: 1;
-  font-size: 15px;
-  color: var(--text-primary);
-}
-
-.action-sheet-cancel {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 16px 20px;
-  margin-top: 8px;
-  border-top: 6px solid var(--bg-secondary);
-  cursor: pointer;
-}
-
-.action-sheet-cancel text {
-  font-size: 16px;
-  color: var(--text-secondary);
-  font-weight: 500;
-}
-
-.action-sheet-cancel:active {
-  background: var(--bg-secondary);
 }
 </style>

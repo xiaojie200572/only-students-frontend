@@ -4,14 +4,14 @@
     <text class="nav-logo">OnlyStudents</text>
     <!-- #endif -->
     <!-- 搜索框 -->
-    <view class="search-bar">
-      <input type="text" class="search-input" placeholder="搜索笔记、创作者..." v-model="searchKeyword" @focus="goToSearch"
-        @confirm="handleSearch" />
-      <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <circle cx="11" cy="11" r="8" />
-        <path d="M21 21l-4.35-4.35" />
-      </svg>
-    </view>
+    <input
+      type="text"
+      class="search-input"
+      placeholder="搜索笔记、创作者..."
+      v-model="searchKeyword"
+      @focus="goToSearch"
+      @confirm="handleSearch"
+    />
 
     <!-- 右侧操作 -->
     <view class="nav-actions">
@@ -63,7 +63,7 @@ const fetchUnreadCount = async () => {
     // 私信未读数
     try {
       const result = await messageApi.getConversations()
-      const conversations = result?.data || result || []
+      const conversations =  result || []
       const msgCount = (conversations || []).reduce((sum: number, c: any) => sum + (c.unreadCount || 0), 0)
       total += msgCount
     } catch (e) {
@@ -155,10 +155,10 @@ const goToMessages = () => {
   background: var(--bg-primary);
   display: flex;
   align-items: center;
-  /* border-bottom: 1px solid var(--border-light); */
   justify-content: space-between;
   padding: 8px 16px;
   z-index: 1000;
+  box-sizing: border-box;
 }
 
 .nav-logo {
@@ -168,35 +168,24 @@ const goToMessages = () => {
   letter-spacing: -0.5px;
 }
 
-.search-bar {
-  flex: 1;
-  max-width: 300px;
-  margin: 0 12px;
-  position: relative;
-}
-
 .search-input {
-  width: 100%;
+  flex: 1;
   height: 36px;
+  margin: 0 12px;
   background: var(--bg-secondary);
   border: 1px solid var(--border-light);
   border-radius: 18px;
-  padding: 0 36px 0 14px;
+  padding: 0 14px 0 36px;
   font-size: 13px;
   color: var(--text-primary);
+  overflow: hidden;
+  box-sizing: border-box;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%239B8B7A' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='M21 21l-4.35-4.35'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: 12px center;
 }
 
 .search-input::placeholder {
-  color: var(--text-tertiary);
-}
-
-.search-icon {
-  position: absolute;
-  right: 10px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 16px;
-  height: 16px;
   color: var(--text-tertiary);
 }
 

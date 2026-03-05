@@ -87,8 +87,7 @@
 
       <!-- 空状态 -->
       <view v-if="notes.length === 0 && !loading" class="empty-state">
-        <text class="empty-title">暂无笔记</text>
-        <text class="empty-desc">去发布你的第一篇学习笔记吧</text>
+       暂无笔记
       </view>
     </scroll-view>
 
@@ -537,7 +536,7 @@ const scrollToTop = () => {
   }
 }
 
-.no-more {
+.no-more ,.empty-state{
   text-align: center;
   padding: 20px;
   color: var(--text-tertiary);

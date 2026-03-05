@@ -22,7 +22,9 @@ export interface UserInfo {
   lastLoginTime?: string
   createdAt?: string
 }
-
+export interface SearchUserInfo extends UserInfo {
+  isFollowing: boolean
+}
 export type LoginType = 'PASSWORD' | 'SMS_CODE'
 
 // 登录请求
@@ -156,7 +158,7 @@ export interface Conversation {
   id: number
   userId?: number
   targetUserId: number
-  targetUserName?: string
+
   targetNickname?: string
   targetUserAvatar?: string
   lastMessage?: string

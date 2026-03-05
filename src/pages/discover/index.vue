@@ -7,14 +7,8 @@
           <circle cx="11" cy="11" r="8" />
           <path d="M21 21l-4.35-4.35" />
         </svg>
-        <input 
-          type="text" 
-          class="search-input" 
-          placeholder="搜索笔记、创作者..." 
-          v-model="searchKeyword" 
-          @focus="onSearchFocus"
-          @confirm="startSearch"
-        />
+        <input type="text" class="search-input" placeholder="搜索笔记、创作者..." v-model="searchKeyword" @focus="onSearchFocus"
+          @confirm="startSearch" />
         <text v-if="searchKeyword" class="clear-btn" @click="searchKeyword = ''">×</text>
       </view>
       <text v-if="hasSearched" class="cancel-btn" @click="cancelSearch">取消</text>
@@ -29,17 +23,12 @@
           <view class="view-all-btn" @click="goToHotRank">
             <text>查看完整榜单</text>
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M9 18l6-6-6-6"/>
+              <path d="M9 18l6-6-6-6" />
             </svg>
           </view>
         </view>
         <view class="hot-tags">
-          <view
-            v-for="(tag, index) in hotTags.slice(0, 10)"
-            :key="index"
-            class="hot-tag"
-            @click="searchByKeyword(tag)"
-          >
+          <view v-for="(tag, index) in hotTags.slice(0, 10)" :key="index" class="hot-tag" @click="searchByKeyword(tag)">
             <text class="tag-rank" :class="{ top: index < 3 }">{{ index + 1 }}</text>
             <text class="tag-text">{{ tag }}</text>
           </view>
@@ -56,12 +45,8 @@
     <template v-else>
       <!-- 结果分类 Tab -->
       <view class="result-tabs">
-        <view
-          v-for="tab in tabs"
-          :key="tab.key"
-          :class="['tab-item', { active: currentTab === tab.key }]"
-          @click="switchTab(tab.key)"
-        >
+        <view v-for="tab in tabs" :key="tab.key" :class="['tab-item', { active: currentTab === tab.key }]"
+          @click="switchTab(tab.key)">
           {{ tab.label }}
         </view>
       </view>
@@ -73,12 +58,7 @@
       </view>
 
       <!-- 综合结果 -->
-      <scroll-view
-        v-else-if="currentTab === 'all'"
-        scroll-y
-        class="result-list"
-        @scrolltolower="loadMore"
-      >
+      <scroll-view v-else-if="currentTab === 'all'" scroll-y class="result-list" @scrolltolower="loadMore">
         <!-- 用户结果（前3个） -->
         <view v-if="userResults.length > 0" class="result-section">
           <view class="section-header">
@@ -87,25 +67,13 @@
           </view>
           <scroll-view scroll-x class="user-scroll" show-scrollbar="false">
             <view class="user-list">
-              <view
-                v-for="user in userResults.slice(0, 5)"
-                :key="user.id"
-                class="user-card"
-                @click="goToUserProfile(user.id)"
-              >
-                <image
-                  :src="user.avatar || '/static/default-avatar.svg'"
-                  class="user-avatar"
-                  mode="aspectFill"
-                />
-                <text class="user-name">{{ user.nickname || user.username }}</text>
+              <view v-for="user in userResults.slice(0, 5)" :key="user.id" class="user-card"
+                @click="goToUserProfile(user.id)">
+                <image :src="user.avatar || '/static/default-avatar.svg'" class="user-avatar" mode="aspectFill" />
+                <text class="user-name">{{ user.nickname }}</text>
                 <text class="user-bio" v-if="user.bio">{{ user.bio.substring(0, 10) }}...</text>
-                <view
-                  v-if="user.id !== currentUserId"
-                  class="follow-btn-mini"
-                  :class="{ following: user.isFollowing }"
-                  @click.stop="toggleFollow(user)"
-                >
+                <view v-if="user.id !== currentUserId" class="follow-btn-mini" :class="{ following: user.isFollowing }"
+                  @click.stop="toggleFollow(user)">
                   <text>{{ user.isFollowing ? '已关注' : '关注' }}</text>
                 </view>
               </view>
@@ -119,26 +87,14 @@
             <text class="section-title">相关笔记</text>
           </view>
           <view class="note-grid">
-            <view
-              v-for="note in noteResults"
-              :key="note.id"
-              class="note-card"
-              @click="goToNoteDetail(note.id)"
-            >
-              <image
-                v-if="note.coverImage"
-                :src="note.coverImage"
-                class="note-cover"
-                mode="aspectFill"
-              />
+            <view v-for="note in noteResults" :key="note.id" class="note-card" @click="goToNoteDetail(note.id)">
+              <image v-if="note.coverImage" :src="note.coverImage" class="note-cover" mode="aspectFill" />
               <view class="note-content">
-                <rich-text class="note-title" :nodes="note.title ? note.title.replace(/<em>/g, '<span style=\'color: #FF6B6B; font-weight: 600;\'>').replace(/<\/em>/g, '</span>') : ''"></rich-text>
+                <rich-text class="note-title"
+                  :nodes="note.title ? note.title.replace(/<em>/g, '<span style=\'color: #FF6B6B; font-weight: 600;\'>').replace(/<\/em>/g, '</span>') : ''"></rich-text>
                 <view class="note-author">
-                  <image
-                    :src="note.authorAvatar || '/static/default-avatar.svg'"
-                    class="author-avatar"
-                  />
-                  <text class="author-name">{{ note.authorName }}</text>
+                  <image :src="note.authorAvatar || '/static/default-avatar.svg'" class="author-avatar" />
+                  <text class="author-name">{{ note.authorNickname }}</text>
                 </view>
               </view>
             </view>
@@ -152,33 +108,16 @@
       </scroll-view>
 
       <!-- 笔记列表 -->
-      <scroll-view
-        v-else-if="currentTab === 'notes'"
-        scroll-y
-        class="result-list"
-        @scrolltolower="loadMore"
-      >
+      <scroll-view v-else-if="currentTab === 'notes'" scroll-y class="result-list" @scrolltolower="loadMore">
         <view v-if="noteResults.length > 0" class="note-grid">
-          <view
-            v-for="note in noteResults"
-            :key="note.id"
-            class="note-card"
-            @click="goToNoteDetail(note.id)"
-          >
-            <image
-              v-if="note.coverImage"
-              :src="note.coverImage"
-              class="note-cover"
-              mode="aspectFill"
-            />
+          <view v-for="note in noteResults" :key="note.id" class="note-card" @click="goToNoteDetail(note.id)">
+            <image v-if="note.coverImage" :src="note.coverImage" class="note-cover" mode="aspectFill" />
             <view class="note-content">
-              <rich-text class="note-title" :nodes="note.title ? note.title.replace(/<em>/g, '<span style=\'color: #FF6B6B; font-weight: 600;\'>').replace(/<\/em>/g, '</span>') : ''"></rich-text>
+              <rich-text class="note-title"
+                :nodes="note.title ? note.title.replace(/<em>/g, '<span style=\'color: #FF6B6B; font-weight: 600;\'>').replace(/<\/em>/g, '</span>') : ''"></rich-text>
               <view class="note-author">
-                <image
-                  :src="note.authorAvatar || '/static/default-avatar.svg'"
-                  class="author-avatar"
-                />
-                <text class="author-name">{{ note.authorName }}</text>
+                <image :src="note.authorAvatar || '/static/default-avatar.svg'" class="author-avatar" />
+                <text class="author-name">{{ note.authorNickname }}</text>
               </view>
             </view>
           </view>
@@ -189,37 +128,19 @@
       </scroll-view>
 
       <!-- 用户列表 -->
-      <scroll-view
-        v-else-if="currentTab === 'users'"
-        scroll-y
-        class="result-list"
-        @scrolltolower="loadMore"
-      >
+      <scroll-view v-else-if="currentTab === 'users'" scroll-y class="result-list" @scrolltolower="loadMore">
         <view v-if="userResults.length > 0" class="user-list-full">
-          <view
-            v-for="user in userResults"
-            :key="user.id"
-            class="user-item"
-            @click="goToUserProfile(user.id)"
-          >
-            <image
-              :src="user.avatar || '/static/default-avatar.svg'"
-              class="user-avatar-large"
-              mode="aspectFill"
-            />
+          <view v-for="user in userResults" :key="user.id" class="user-item" @click="goToUserProfile(user.id)">
+            <image :src="user.avatar || '/static/default-avatar.svg'" class="user-avatar-large" mode="aspectFill" />
             <view class="user-info">
-              <text class="user-name">{{ user.nickname || user.username }}</text>
+              <text class="user-name">{{ user.nickname }}</text>
               <text class="user-bio" v-if="user.bio">{{ user.bio }}</text>
-              <text class="user-stats" v-if="user.subscriberCount">
-                {{ formatNumber(user.subscriberCount) }} 粉丝
+              <text class="user-stats" v-if="user.followerCount">
+                {{ formatNumber(user.followerCount) }} 粉丝
               </text>
             </view>
-            <view
-              class="follow-btn"
-              :class="{ following: user.isFollowing }"
-              v-if="user.id !== currentUserId"
-              @click.stop="toggleFollow(user)"
-            >
+            <view class="follow-btn" :class="{ following: user.isFollowing }" v-if="user.id !== currentUserId"
+              @click.stop="toggleFollow(user)">
               <text>{{ user.isFollowing ? '已关注' : '关注' }}</text>
             </view>
           </view>
@@ -241,12 +162,11 @@ import { useUserStore } from '@/stores/user'
 import TabBar from '@/components/TabBar.vue'
 import { searchApi } from '@/api/search'
 import { subscriptionApi } from '@/api/message'
-import { NOTE_CATEGORIES } from '@/config/api.config'
-import type { Note, UserInfo } from '@/types/api.types'
+import type { Note, SearchUserInfo } from '@/types/api.types'
 
 const userStore = useUserStore()
 const currentUserId = computed(() => userStore.userInfo?.id)
-
+const subscribedIds = ref<Set<number>>(new Set())
 // 搜索状态
 const searchKeyword = ref('')
 const isSearching = ref(false)
@@ -255,16 +175,12 @@ const hasSearched = ref(false)
 const currentTab = ref('all')
 const loading = ref(false)
 
-// 热搜榜单弹窗
-const showRankListModal = ref(false)
-
 // 跳转至热搜榜单页面
 
 // 搜索结果
 const noteResults = ref<Note[]>([])
-const userResults = ref<UserInfo[]>([])
+const userResults = ref<SearchUserInfo[]>([])
 const hotTags = ref<string[]>(['高考数学', '雅思备考', 'Python入门', '考研政治'])
-const categories = ref(NOTE_CATEGORIES)
 
 // 分页
 const currentPage = ref(1)
@@ -277,6 +193,10 @@ const tabs = [
   { key: 'notes', label: '笔记' },
   { key: 'users', label: '用户' }
 ]
+const fetchSubscribedIds = async () => {
+  const res = await subscriptionApi.getMySubscriptions()
+  subscribedIds.value = new Set(res.map(s => s.creatorId))
+}
 
 // 获取热门搜索
 const fetchHotTags = async () => {
@@ -319,55 +239,49 @@ const performSearch = async () => {
   loading.value = true
 
   try {
-    // 根据当前 Tab 决定搜索范围
     const fetchNotes = currentTab.value !== 'users'
     const fetchUsers = currentTab.value !== 'notes'
 
-    const promises = []
+    // 并行但分开处理
+    const notePromise = fetchNotes
+      ? searchApi.searchNotes({ keyword: searchKeyword.value, page: currentPage.value, size: pageSize })
+        .catch(() => ({ list: [], total: 0 }))
+      : Promise.resolve({ list: [], total: 0 })
 
+    const userPromise = fetchUsers
+      ? searchApi.searchUsers({ keyword: searchKeyword.value, page: currentPage.value, size: pageSize })
+        .catch(() => ({ list: [], total: 0 }))
+      : Promise.resolve({ list: [], total: 0 })
+
+    // 同时发起，但结果分开
+    const [noteRes, userRes] = await Promise.all([notePromise, userPromise])
+
+    // 处理笔记结果
     if (fetchNotes) {
-      promises.push(
-        searchApi.searchNotes({
-          keyword: searchKeyword.value,
-          page: currentPage.value,
-          size: pageSize
-        }).catch(() => ({ list: [], total: 0 }))
-      )
+      const list = noteRes.list
+      if (currentPage.value === 1) {
+        noteResults.value = list
+      } else {
+        noteResults.value.push(...list)
+      }
     }
 
+    // 处理用户结果
     if (fetchUsers) {
-      promises.push(
-        searchApi.searchUsers({
-          keyword: searchKeyword.value,
-          page: currentPage.value,
-          size: pageSize
-        }).catch(() => ({ list: [], total: 0 }))
-      )
-    }
-
-    const results = await Promise.all(promises)
-
-    if (currentPage.value === 1) {
-      if (fetchNotes) {
-        noteResults.value = results[0]?.list || []
-      }
-      if (fetchUsers) {
-        const userIndex = fetchNotes ? 1 : 0
-        userResults.value = results[userIndex]?.list || []
-      }
-    } else {
-      if (fetchNotes) {
-        noteResults.value.push(...(results[0]?.list || []))
-      }
-      if (fetchUsers) {
-        const userIndex = fetchNotes ? 1 : 0
-        userResults.value.push(...(results[userIndex]?.list || []))
+      const list = userRes.list.map(item => ({
+        ...item,
+        isFollowing: subscribedIds.value.has(item.id)  // 直接用缓存，不请求
+      }))
+      if (currentPage.value === 1) {
+        userResults.value = list
+      } else {
+        //追加新数据
+        userResults.value.push(...list)
       }
     }
-
     // 判断是否还有更多
-    const noteTotal = fetchNotes ? results[0]?.total || 0 : 0
-    const userTotal = fetchUsers ? (fetchNotes ? results[1]?.total : results[0]?.total) || 0 : 0
+    const noteTotal = fetchNotes ? noteRes.total : 0
+    const userTotal = fetchUsers ? userRes.total : 0
     const totalLoaded = noteResults.value.length + userResults.value.length
     hasMore.value = totalLoaded < (noteTotal + userTotal)
 
@@ -429,13 +343,13 @@ const goToNoteDetail = (noteId: number) => {
 }
 
 // 关注/取消关注
-const toggleFollow = async (user: UserInfo) => {
+const toggleFollow = async (user: SearchUserInfo) => {
   try {
     if (user.isFollowing) {
       await subscriptionApi.unsubscribe(user.id)
       user.isFollowing = false
     } else {
-      await subscriptionApi.subscribe({ creatorId: user.id })
+      await subscriptionApi.subscribe(user.id )
       user.isFollowing = true
     }
   } catch (error) {
@@ -451,7 +365,8 @@ const formatNumber = (num: number): string => {
   return num.toString()
 }
 
-onMounted(() => {
+onMounted(async () => {
+  fetchSubscribedIds()
   fetchHotTags()
 
   // 检查 URL 参数，如果有 keyword 则自动搜索
@@ -687,7 +602,9 @@ onMounted(() => {
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* 结果列表 */

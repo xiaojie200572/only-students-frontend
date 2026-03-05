@@ -3,7 +3,6 @@ import { onLaunch, onShow, onHide } from "@dcloudio/uni-app";
 import { useThemeStore } from "./stores/theme";
 
 onLaunch(() => {
-  console.log("App Launch");
   // 初始化主题
   const themeStore = useThemeStore();
   themeStore.initTheme();

@@ -3,7 +3,6 @@ import { ref, computed } from 'vue'
 import { noteApi, favoriteApi } from '@/api/note'
 import { searchApi } from '@/api/search'
 import type { Note, SearchParams } from '@/types/api.types'
-import { NOTE_CATEGORIES } from '@/config/api.config'
 
 export const useNoteStore = defineStore('note', () => {
   // 状态
@@ -15,9 +14,6 @@ export const useNoteStore = defineStore('note', () => {
   const pageSize = ref(10)
   const selectedCategory = ref<number | null>(null)
   const searchKeyword = ref('')
-
-  // 分类列表
-  const categories = ref(NOTE_CATEGORIES)
 
   // 计算属性
   const filteredNotes = computed(() => {
@@ -146,7 +142,6 @@ export const useNoteStore = defineStore('note', () => {
     notes,
     currentNote,
     filteredNotes,
-    categories,
     loading,
     hasMore,
     currentPage,

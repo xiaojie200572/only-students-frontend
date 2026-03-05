@@ -23,8 +23,7 @@
         <view class="comment-content">
           <view class="comment-header">
             <view class="comment-user-info" @click.stop="goToUserProfile(rootComment.userId)">
-              <text class="comment-nickname">{{ rootComment.nickname || rootComment.username }}</text>
-              <text class="comment-username">@{{ rootComment.username }}</text>
+              <text class="comment-nickname">{{ rootComment.nickname}}</text>
             </view>
             <text class="comment-time">{{ formatTime(rootComment.createdAt) }}</text>
           </view>
@@ -54,7 +53,7 @@
         <view class="replies-header">
           <text class="replies-count">{{ replies.length }}条回复</text>
         </view>
-        
+
         <view
           v-for="reply in replies"
           :key="reply.id"
@@ -70,8 +69,7 @@
           <view class="reply-content">
             <view class="comment-header">
               <view class="comment-user-info" @click.stop="goToUserProfile(reply.userId)">
-                <text class="comment-nickname">{{ reply.nickname || reply.username }}</text>
-                <text class="comment-username">@{{ reply.username }}</text>
+                <text class="comment-nickname">{{ reply.nickname }}</text>
               </view>
               <text class="comment-time">{{ formatTime(reply.createdAt) }}</text>
             </view>
@@ -114,7 +112,7 @@
     <!-- 回复输入框 -->
     <view class="bottom-bar">
       <view class="action-input" @click="focusInput">
-        <text class="placeholder">回复 {{ replyTo ? replyTo.username : '' }}...</text>
+        <text class="placeholder">回复 {{ replyTo ? replyTo.userNickname : '' }}...</text>
       </view>
     </view>
 
@@ -124,7 +122,7 @@
       <view class="comment-input-box">
         <textarea
           v-model="replyContent"
-          :placeholder="replyTo ? `回复 ${replyTo.username}:` : '写回复...'"
+          :placeholder="replyTo ? `回复 ${replyTo.userNickname}:` : '写回复...'"
           class="comment-textarea"
           :focus="showInput"
           maxlength="500"
@@ -200,7 +198,7 @@ const likeRootComment = async () => {
     uni.navigateTo({ url: '/pages/auth/login' })
     return
   }
-  
+
   try {
     if (rootComment.value.isLiked) {
       await commentApi.unlikeComment(rootComment.value.id)
@@ -221,7 +219,7 @@ const likeReply = async (reply: any) => {
     uni.navigateTo({ url: '/pages/auth/login' })
     return
   }
-  
+
   try {
     if (reply.isLiked) {
       await commentApi.unlikeComment(reply.id)
@@ -289,7 +287,7 @@ const submitReply = async () => {
 
 const goBack = () => {
   const pages = getCurrentPages()
-  
+
   if (pages.length > 1) {
     uni.navigateBack({ delta: 1 })
   } else if (pages.length === 1 && pages[0].route === 'pages/note/comment-detail') {
@@ -308,16 +306,16 @@ const formatTime = (time: string) => {
   const date = new Date(time)
   const now = new Date()
   const diff = now.getTime() - date.getTime()
-  
+
   const minutes = Math.floor(diff / 60000)
   const hours = Math.floor(diff / 3600000)
   const days = Math.floor(diff / 86400000)
-  
+
   if (minutes < 1) return '刚刚'
   if (minutes < 60) return `${minutes}分钟前`
   if (hours < 24) return `${hours}小时前`
   if (days < 7) return `${days}天前`
-  
+
   return `${date.getMonth() + 1}-${date.getDate()}`
 }
 </script>
