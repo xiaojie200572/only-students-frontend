@@ -72,7 +72,7 @@
     <!-- 瀑布流笔记列表 -->
     <scroll-view scroll-y class="content-area" @scrolltolower="loadMore" :refresher-enabled="true"
       :refresher-triggered="refreshing" @refresherrefresh="onRefresh">
-      <Waterfall :notes="notes" @note-click="handleNoteClick" />
+      <Waterfall :notes="currentNotes" @note-click="handleNoteClick" />
 
       <!-- 加载更多 -->
       <view v-if="loading" class="loading-more">
@@ -81,12 +81,12 @@
       </view>
 
       <!-- 没有更多了 -->
-      <view v-if="!hasMore && notes.length > 0" class="no-more">
+      <view v-if="!hasMore && currentNotes.length > 0" class="no-more">
         <text>没有更多了</text>
       </view>
 
       <!-- 空状态 -->
-      <view v-if="notes.length === 0 && !loading" class="empty-state">
+      <view v-if="currentNotes.length === 0 && !loading" class="empty-state">
        暂无笔记
       </view>
     </scroll-view>
@@ -109,19 +109,27 @@ import Waterfall from '@/components/Waterfall.vue'
 import TabBar from '@/components/TabBar.vue'
 
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
-import { useNoteStore } from '@/stores/note'
 import { useUserStore } from '@/stores/user'
-import { noteApi } from '@/api/note'
 import { searchApi } from '@/api/search'
+import { noteApi } from '@/api/note'
 import type { Note } from '@/types/api.types'
 
-const noteStore = useNoteStore()
 const userStore = useUserStore()
 
 // 分类筛选
 const activeCategory = ref('all') // 'all' or 'school'
 const activeTag = ref('')
 const quickTags = ref<string[]>([])
+
+// 分类数据独立存储，避免覆盖
+const allNotes = ref<Note[]>([])
+const schoolNotes = ref<Note[]>([])
+const currentNotes = computed(() => {
+  if (activeCategory.value === 'school') {
+    return schoolNotes.value
+  }
+  return allNotes.value
+})
 
 // 添加标签弹窗
 const addTagModalVisible = ref(false)
@@ -158,39 +166,45 @@ const selectTag = (tag: string) => {
 
 // 根据筛选条件获取笔记
 const fetchWithFilters = async () => {
-  const loading = ref(false)
-
-  if (loading.value) return
-  loading.value = true
+  if (loadingMore.value) return
 
   try {
     let notes: Note[] = []
 
     if (activeCategory.value === 'all' && !activeTag.value) {
-      // 获取全部笔记
-      notes = await noteApi.getLatest(20)
+      // 全部笔记：使用数据库
+      const result = await noteApi.getLatest(20)
+      notes = result || []
+      allNotes.value = notes
     } else if (activeCategory.value === 'school') {
-      // 使用search-service按学校搜索
+      // 使用数据库按学校查询
       const schoolId = userStore.userInfo?.schoolId
       if (schoolId) {
-        const result = await searchApi.searchBySchool(schoolId, 1, 20)
-        notes = result.list
+        const result = await noteApi.getBySchoolId(schoolId, 20)
+        notes = result || []
+        schoolNotes.value = notes
       } else {
         uni.showToast({ title: '请先设置学校', icon: 'none' })
         return
       }
     } else if (activeTag.value) {
-      // 使用search-service搜索（标题、内容、标签）
-      const result = await searchApi.searchNotes({ keyword: activeTag.value, page: 1, size: 20 })
-      notes = result.list
+      // 使用 search-service 搜索（标题、内容、标签）
+      const result = await searchApi.searchNotes({
+        keyword: activeTag.value,
+        page: 1,
+        size: 20
+      })
+      notes = result.list || []
+      allNotes.value = notes
+    } else {
+      // 默认从数据库获取（全部笔记）
+      notes = await noteApi.getLatest(20)
+      notes = notes || []
+      allNotes.value = notes
     }
-
-    noteStore.notes = notes
   } catch (error) {
     console.error('获取笔记失败:', error)
     uni.showToast({ title: '加载失败', icon: 'none' })
-  } finally {
-    loading.value = false
   }
 }
 
@@ -229,22 +243,42 @@ const removeTag = (index: number) => {
 const refreshing = ref(false)
 const showBackToTop = ref(false)
 
-// 从 store 获取数据
-const notes = computed(() => noteStore.notes)
-const loading = computed(() => noteStore.loading)
-const hasMore = computed(() => noteStore.hasMore)
+// 本地加载状态
+const loadingMore = ref(false)
+const hasMore = ref(true)
 
 // 加载更多
-const loadMore = () => {
-  if (!loading.value && hasMore.value) {
-    noteStore.fetchNotes()
+const loadMore = async () => {
+  if (loadingMore.value || !hasMore.value) return
+  
+  loadingMore.value = true
+  try {
+    let notes: Note[] = []
+    let currentPage = 1
+    
+    if (activeCategory.value === 'all' && !activeTag.value) {
+      // 数据库不支持分页，暂时不支持加载更多
+      hasMore.value = false
+    } else if (activeCategory.value === 'school') {
+      const schoolId = userStore.userInfo?.schoolId
+      if (schoolId) {
+        // 数据库不支持分页，暂时不支持加载更多
+        hasMore.value = false
+      }
+    }
+    
+    hasMore.value = notes.length > 0
+  } catch (error) {
+    console.error('加载更多失败:', error)
+  } finally {
+    loadingMore.value = false
   }
 }
 
-// 下拉刷新（真正需要强制刷新时才用）
+// 下拉刷新
 const onRefresh = async () => {
   refreshing.value = true
-  await noteStore.fetchNotes(true)
+  await fetchWithFilters()
   refreshing.value = false
 }
 
@@ -255,9 +289,18 @@ const handleNoteClick = (note: Note) => {
   })
 }
 
-// 🔥 增量更新收藏数（乐观更新核心）
+// 增量更新收藏数（乐观更新核心）
 const handleFavoriteUpdate = (payload: { id: number; delta: number }) => {
-  noteStore.updateFavoriteCount(payload.id, payload.delta)
+  const updateNotes = (notes: Note[]) => {
+    return notes.map(n => {
+      if (n.id === payload.id) {
+        return { ...n, favoriteCount: (n.favoriteCount || 0) + payload.delta }
+      }
+      return n
+    })
+  }
+  allNotes.value = updateNotes(allNotes.value)
+  schoolNotes.value = updateNotes(schoolNotes.value)
 }
 
 // 生命周期
@@ -266,8 +309,8 @@ onMounted(() => {
   loadTags()
 
   // 只在第一次加载时请求
-  if (!notes.value.length) {
-    noteStore.fetchNotes(true)
+  if (!allNotes.value.length && activeCategory.value === 'all') {
+    fetchWithFilters()
   }
 
   // 监听收藏更新事件（来自详情页）

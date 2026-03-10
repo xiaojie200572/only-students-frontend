@@ -43,6 +43,11 @@ export const noteApi = {
     return get<Note[]>('/note/latest', { limit })
   },
 
+  // 获取学校笔记
+  getBySchoolId: (schoolId: number, limit: number = 20) => {
+    return get<Note[]>(`/note/school/${schoolId}`, { limit })
+  },
+
   // 获取用户笔记列表
   getByUserId: (userId: number) => {
     return get<Note[]>(`/note/user/${userId}`)
