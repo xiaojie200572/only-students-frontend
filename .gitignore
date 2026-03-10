@@ -20,4 +20,4 @@ dist
 *.sln
 *.sw?
 nul
-.opencode
+.opencode/
