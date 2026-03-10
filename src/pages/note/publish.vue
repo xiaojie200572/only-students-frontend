@@ -292,7 +292,7 @@ const loading = ref(false)
 // 如果是编辑模式，加载现有笔记数据
 onMounted(async () => {
   // 保存来源页面（用于刷新后返回）
-  const pages = getCurrentPages()
+  const pages = getCurrentPages() as any[]
   if (pages.length > 1) {
     const refererPage = pages[pages.length - 2]
     uni.setStorageSync('publish_referer', '/' + refererPage.route)
@@ -691,7 +691,7 @@ const handleDelete = async () => {
 }
 
 const goBack = () => {
-  const pages = getCurrentPages()
+  const pages = getCurrentPages() as any[]
 
   if (pages.length > 1) {
     uni.navigateBack({ delta: 1 })

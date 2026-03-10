@@ -109,8 +109,30 @@ export interface Note {
   tags?: string[]
   authorNickname?: string
   authorAvatar?: string
+  authorName?: string
   publishTime?: string
   createdAt: string
+}
+
+// 评论相关类型
+export interface Comment {
+  id: number
+  noteId: number
+  userId: number
+  parentId?: number
+  rootId?: number
+  content: string
+  likeCount?: number
+  replyCount?: number
+  status?: number
+  deleted?: number
+  isTop?: number
+  isRead?: number
+  createdAt: string
+  updatedAt?: string
+  nickname?: string
+  avatar?: string
+  isLiked?: boolean
 }
 
 // 创建笔记请求
@@ -227,7 +249,8 @@ export interface Subscription {
   id: number
   subscriberId: number
   creatorId: number
-  creatorName?: string
+  creatorNickname?: string
+  creatorBio?: string
   creatorAvatar?: string
   price: number
   startTime: string

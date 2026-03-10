@@ -13,16 +13,16 @@
 
     <!-- 标签栏 -->
     <view class="tabs">
-      <view 
-        class="tab-item" 
+      <view
+        class="tab-item"
         :class="{ active: activeTab === 'received' }"
         @click="switchTab('received')"
       >
         <text>收到的评论</text>
         <view v-if="receivedUnread > 0" class="tab-badge">{{ receivedUnread }}</view>
       </view>
-      <view 
-        class="tab-item" 
+      <view
+        class="tab-item"
         :class="{ active: activeTab === 'sent' }"
         @click="switchTab('sent')"
       >
@@ -56,36 +56,36 @@
           @click="handleCommentClick(comment)"
         >
           <!-- 头像 -->
-          <image 
-            :src="comment.fromUserAvatar || '/static/default-avatar.svg'" 
-            class="comment-avatar" 
+          <image
+            :src="comment.fromUserAvatar || '/static/default-avatar.svg'"
+            class="comment-avatar"
             mode="aspectFill"
           />
-          
+
           <!-- 内容 -->
           <view class="comment-content">
             <view class="comment-header">
               <text class="comment-nickname">{{ comment.fromUserNickname || '用户' }}</text>
               <text class="comment-time">{{ formatTime(comment.createdAt) }}</text>
             </view>
-            
+
             <!-- 收到的评论显示原文 -->
             <view v-if="activeTab === 'received'" class="comment-original">
               <text class="original-label">回复了我的笔记：</text>
               <text class="original-content">{{ comment.noteTitle || '笔记' }}</text>
             </view>
-            
+
             <text class="comment-text">{{ comment.commentContent || '' }}</text>
           </view>
-          
+
           <!-- 笔记封面 -->
-          <image 
-            v-if="comment.noteCoverImage" 
-            :src="comment.noteCoverImage" 
-            class="note-cover" 
+          <image
+            v-if="comment.noteCoverImage"
+            :src="comment.noteCoverImage"
+            class="note-cover"
             mode="aspectFill"
           />
-          
+
           <!-- 删除按钮 -->
           <view class="item-delete-btn" @click.stop="deleteComment(comment)">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -93,7 +93,7 @@
               <line x1="6" y1="6" x2="18" y2="18"/>
             </svg>
           </view>
-          
+
           <!-- 未读红点 -->
           <view v-if="comment.isRead === 0 && activeTab === 'received'" class="unread-dot"></view>
         </view>
@@ -111,6 +111,7 @@
 import { ref, onMounted } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import { commentNotificationApi } from '@/api/message'
+import { commentApi } from '@/api/note'
 import { useUserStore } from '@/stores/user'
 
 interface CommentWithUser {
@@ -126,12 +127,14 @@ interface CommentWithUser {
   noteTitle?: string
   noteCoverImage?: string
   commentContent?: string
+  isLiked?: boolean
+  likeCount?: number
 }
 
 const canBack = ref(false)
 
 onShow(() => {
-  const pages = getCurrentPages()
+  const pages = getCurrentPages() as any[]
   canBack.value = pages.length > 1
 })
 
@@ -170,7 +173,7 @@ const formatTime = (timeStr: string): string => {
   const date = new Date(timeStr)
   const now = new Date()
   const diff = now.getTime() - date.getTime()
-  
+
   if (diff < 60000) return '刚刚'
   if (diff < 3600000) return Math.floor(diff / 60000) + '分钟前'
   if (diff < 86400000) return Math.floor(diff / 3600000) + '小时前'
@@ -189,12 +192,12 @@ const switchTab = (tab: 'received' | 'sent') => {
 
 const fetchComments = async (refresh = false) => {
   if (loading.value) return
-  
+
   if (refresh) {
     currentPage.value = 1
     comments.value = []
   }
-  
+
   loading.value = true
   try {
     // 使用新的通知API获取评论通知列表
@@ -229,7 +232,7 @@ const loadMore = () => {
 const handleCommentClick = async (comment: CommentWithUser) => {
   console.log('点击评论通知，isRead:', comment.isRead, 'type:', typeof comment.isRead)
   // 标记已读
-  if ((comment.isRead === 0 || comment.isRead === false || !comment.isRead) && activeTab.value === 'received') {
+  if ((comment.isRead === 0 || !comment.isRead) && activeTab.value === 'received') {
     try {
       await commentNotificationApi.markAsRead(comment.id)
       comment.isRead = 1
@@ -240,11 +243,11 @@ const handleCommentClick = async (comment: CommentWithUser) => {
       console.error('标记已读失败:', e)
     }
   }
-  
+
   // 跳转到笔记详情
   if (comment.noteId) {
-    uni.navigateTo({ 
-      url: `/pages/note/detail?id=${comment.noteId}` 
+    uni.navigateTo({
+      url: `/pages/note/detail?id=${comment.noteId}`
     })
   }
 }

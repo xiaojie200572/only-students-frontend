@@ -22,7 +22,7 @@
         </view>
         <text class="entrance-label">评论</text>
       </view>
-      
+
       <view class="entrance-item" @click="goToPage('favorite')">
         <view class="entrance-icon favorite-icon">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -32,7 +32,7 @@
         </view>
         <text class="entrance-label">收藏</text>
       </view>
-      
+
       <view class="entrance-item" @click="goToPage('message')">
         <view class="entrance-icon message-icon">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -43,7 +43,7 @@
         </view>
         <text class="entrance-label">私信</text>
       </view>
-      
+
       <view class="entrance-item" @click="goToPage('follower')">
         <view class="entrance-icon follower-icon">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -63,13 +63,13 @@
       <view class="section-header">
         <text class="section-title">系统消息</text>
       </view>
-      
+
       <!-- 加载状态 -->
       <view v-if="loading" class="loading-state">
         <view class="spinner"></view>
         <text>加载中...</text>
       </view>
-      
+
       <!-- 空状态 -->
       <view v-else-if="!loading && systemMessages.length === 0" class="empty-state">
         <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
@@ -78,7 +78,7 @@
         </svg>
         <text class="empty-text">暂无系统消息</text>
       </view>
-      
+
       <!-- 系统消息列表 -->
       <scroll-view v-else scroll-y class="system-list">
         <view
@@ -95,7 +95,7 @@
               <line x1="6" y1="6" x2="18" y2="18"/>
             </svg>
           </view>
-          
+
           <view class="system-icon" :class="getNoticeTypeClass(notice.type)">
             <svg v-if="notice.type === 1" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <circle cx="12" cy="12" r="10"/>
@@ -131,7 +131,7 @@
           </view>
           <view v-if="!notice.isRead" class="unread-dot"></view>
         </view>
-        
+
         <!-- 加载更多 -->
         <view v-if="hasMore" class="load-more">
           <text>加载更多...</text>
@@ -144,12 +144,14 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
-import { notificationApi, messageApi, subscriptionApi, commentNotificationApi, favoriteNotificationApi, messageNotificationApi, followerNotificationApi } from '@/api/message'
-import { favoriteApi, commentApi } from '@/api/note'
+import { notificationApi, commentNotificationApi, favoriteNotificationApi, messageNotificationApi, followerNotificationApi } from '@/api/message'
 import type { Notification } from '@/types/api.types'
 
 const canBack = ref(false)
 let eventSource: EventSource | null = null
+
+// 删除模式
+const deleteMode = ref(false)
 
 // 未读计数
 const commentUnread = ref(0)
@@ -189,7 +191,7 @@ onUnmounted(() => {
 
 onShow(() => {
   console.log('onShow called, fetching unread counts...')
-  const pages = getCurrentPages()
+  const pages = getCurrentPages() as any[]
   canBack.value = pages.length > 1
   fetchUnreadCounts()
 })
@@ -207,7 +209,7 @@ const connectSSE = () => {
   const userId = uni.getStorageSync('userId')
   const url = `http://localhost:8080/api/notification/sse/subscribe?userId=${userId}&token=${token}`
   eventSource = new EventSource(url)
-  
+
   eventSource.addEventListener('unread-count', (event) => {
     try {
       const data = JSON.parse(event.data)
@@ -218,7 +220,7 @@ const connectSSE = () => {
       console.error('解析未读数失败:', e)
     }
   })
-  
+
   eventSource.addEventListener('notification', (event) => {
     try {
       const data = JSON.parse(event.data)
@@ -231,7 +233,7 @@ const connectSSE = () => {
       console.error('解析通知失败:', e)
     }
   })
-  
+
   eventSource.onerror = (error) => {
     console.error('SSE错误:', error)
     eventSource?.close()
@@ -246,7 +248,7 @@ const formatTime = (timeStr: string): string => {
   const date = new Date(timeStr)
   const now = new Date()
   const diff = now.getTime() - date.getTime()
-  
+
   if (diff < 60000) return '刚刚'
   if (diff < 3600000) return Math.floor(diff / 60000) + '分钟前'
   if (diff < 86400000) return Math.floor(diff / 3600000) + '小时前'
@@ -297,7 +299,7 @@ const fetchUnreadCounts = async () => {
       console.error('获取评论通知未读数失败:', e)
       commentUnread.value = 0
     }
-    
+
     // 获取收藏通知未读数
     try {
       const favoriteCount = await favoriteNotificationApi.getUnreadCount()
@@ -307,7 +309,7 @@ const fetchUnreadCounts = async () => {
       console.error('获取收藏通知未读数失败:', e)
       favoriteUnread.value = 0
     }
-    
+
     // 获取私信通知未读数
     try {
       const msgCount = await messageNotificationApi.getUnreadCount()
@@ -317,7 +319,7 @@ const fetchUnreadCounts = async () => {
       console.error('获取私信通知未读数失败:', e)
       messageUnread.value = 0
     }
-    
+
     // 获取粉丝通知未读数
     try {
       const followerCount = await followerNotificationApi.getUnreadCount()
@@ -338,11 +340,11 @@ const fetchSystemMessages = async (refresh = false) => {
     currentPage.value = 1
     systemMessages.value = []
   }
-  
+
   loading.value = true
   try {
     const result = await notificationApi.getList(currentPage.value, pageSize)
-    const data = result?.data || result || []
+    const data =  result || []
     if (data && data.length > 0) {
       systemMessages.value.push(...data)
       hasMore.value = data.length === pageSize
@@ -366,7 +368,7 @@ const handleNoticeClick = (notice: Notification) => {
       console.error('标记已读失败:', err)
     })
   }
-  
+
   // 根据通知类型跳转
   if (notice.targetId && notice.targetType) {
     switch (notice.targetType) {

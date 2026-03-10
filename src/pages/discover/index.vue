@@ -371,7 +371,7 @@ onMounted(async () => {
 
   // 检查 URL 参数，如果有 keyword 则自动搜索
   const pages = getCurrentPages()
-  const currentPage = pages[pages.length - 1]
+  const currentPage = pages[pages.length - 1] as any
   if (currentPage && currentPage.options && currentPage.options.keyword) {
     searchKeyword.value = decodeURIComponent(currentPage.options.keyword)
     startSearch()

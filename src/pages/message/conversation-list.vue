@@ -79,7 +79,7 @@ import { Conversation } from '@/types/api.types'
 const canBack = ref(false)
 
 onShow(() => {
-  const pages = getCurrentPages()
+  const pages = getCurrentPages() as any[]
   canBack.value = pages.length > 1
 })
 

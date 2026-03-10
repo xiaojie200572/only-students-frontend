@@ -86,7 +86,7 @@ import {followerNotificationApi} from '@/api/message'
 const canBack = ref(false)
 
 onShow(() => {
-  const pages = getCurrentPages()
+  const pages = getCurrentPages() as any[]
   canBack.value = pages.length > 1
 })
 
@@ -178,7 +178,7 @@ const loadMore = () => {
 const handleFollowerClick = async (follower: Follower) => {
   console.log('点击粉丝通知，isRead:', follower.isRead, 'type:', typeof follower.isRead)
   // 标记已读
-  if (follower.isRead === 0 || follower.isRead === false || !follower.isRead) {
+  if (follower.isRead === 0 || !follower.isRead) {
     try {
       await followerNotificationApi.markAsRead(follower.id)
       follower.isRead = 1

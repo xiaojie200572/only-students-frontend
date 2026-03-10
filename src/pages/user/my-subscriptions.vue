@@ -38,7 +38,7 @@
           />
           <view class="creator-info">
             <view class="creator-name-row">
-              <text class="creator-nickname">{{ sub.creatorNickname || sub.creatorName }}</text>
+              <text class="creator-nickname">{{ sub.creatorNickname }}</text>
             </view>
             <text v-if="sub.creatorBio" class="creator-bio">{{ sub.creatorBio }}</text>
             <text v-else class="creator-bio empty">暂无介绍</text>
@@ -55,7 +55,7 @@
         </view>
       </view>
     </scroll-view>
-    
+
     <!-- 底部导航 -->
     <TabBar :current="1" />
   </view>

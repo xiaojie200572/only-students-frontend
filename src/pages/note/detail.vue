@@ -32,8 +32,8 @@
         </view>
         <scroll-view scroll-y class="folder-modal-list">
           <view
-            v-for="folder in folders"
-            :key="folder.id"
+            v-for="(folder, index) in folders"
+            :key="folder.id ?? index"
             class="folder-modal-item"
             :class="{ active: currentFolderId === folder.id }"
             @click="selectFolder(folder)"
@@ -450,6 +450,7 @@ import { noteApi, favoriteApi, ratingApi, shareApi, commentApi } from '@/api/not
 import { subscriptionApi, paymentApi } from '@/api/message'
 import { getFilePreviewUrl, getFileConvertStatus } from '@/api/file'
 import { useUserStore } from '@/stores/user'
+import { getCurrentPage } from '@/utils'
 import type { Note } from '@/types/api.types'
 
 const userStore = useUserStore()
@@ -595,25 +596,23 @@ const noteImages = computed(() => {
           if (!att) return
           const type = (att.fileType || '').toLowerCase()
           const fileId = Number(att.fileId)
-          const convStatus = fileId ? convertStatus.value[fileId] : null
+          const convStatus = fileId ? convertStatus.value[fileId as number] : null
 
           // 图片类型
           if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp'].includes(type)) {
-            const url = fileId && previewUrls.value[fileId]
-              ? previewUrls.value[fileId]
-              : att.fileUrl
+            const url = fileId ? previewUrls.value[fileId as number] : att.fileUrl
             images.push({ url, isPdf: false })
           }
           // PDF类型 - 使用预览URL
           else if (type === 'pdf' && fileId) {
-            const url = previewUrls.value[fileId] || att.fileUrl
+            const url = previewUrls.value[fileId as number] || att.fileUrl
             images.push({ url, isPdf: true, fileId })
           }
           // Office文件 - 检查转换状态，只有转换成功才显示
           else if (['doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx'].includes(type) && fileId) {
             if (convStatus && convStatus.status === 2 && convStatus.pdfFileId) {
               // 转换成功(status=2)，使用PDF预览
-              const pdfUrl = previewUrls.value[convStatus.pdfFileId] || ''
+              const pdfUrl = previewUrls.value[convStatus.pdfFileId as number] || ''
               images.push({ url: pdfUrl, isPdf: true, pdfFileId: convStatus.pdfFileId, fileId })
             }
             // 转换未完成或失败，不添加到轮播
@@ -645,7 +644,7 @@ const noteAttachments = computed(() => {
           if (!att) return false
           const type = (att.fileType || '').toLowerCase()
           const fileId = Number(att.fileId)
-          const convStatus = fileId ? convertStatus.value[fileId] : null
+          const convStatus = fileId ? convertStatus.value[fileId as number] : null
 
           // 图片和已转换的PDF不在附件列表显示
           if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp'].includes(type)) {
@@ -662,15 +661,11 @@ const noteAttachments = computed(() => {
               return false
             }
             // 未转换的显示在附件列表
-            att.previewUrl = fileId && previewUrls.value[fileId]
-              ? previewUrls.value[fileId]
-              : att.fileUrl
+            att.previewUrl = fileId ? previewUrls.value[fileId as number] : att.fileUrl
             return true
           }
           // 其他文件显示在附件列表
-          att.previewUrl = fileId && previewUrls.value[fileId]
-            ? previewUrls.value[fileId]
-            : att.fileUrl
+          att.previewUrl = fileId ? previewUrls.value[fileId as number] : att.fileUrl
           return true
         })
       }
@@ -764,11 +759,11 @@ const onPreviewSwiperChange = (e: any) => {
 }
 
 onMounted(() => {
-  const pages = getCurrentPages()
-  const currentPage = pages[pages.length - 1]
+  const currentPage = getCurrentPage()
   const id = currentPage.options?.id
 
   // 保存来源页面（用于刷新后返回）
+  const pages = getCurrentPages() as any[]
   if (pages.length > 1) {
     const refererPage = pages[pages.length - 2]
     uni.setStorageSync('detail_referer', '/' + refererPage.route)
@@ -860,7 +855,7 @@ const loadPreviewUrls = async () => {
 
       const results = await Promise.all(urlPromises)
       results.forEach((item) => {
-        previewUrls.value[item.fileId] = item.url
+        previewUrls.value[item.fileId as number] = item.url
       })
     }
   } catch (e) {
@@ -880,7 +875,7 @@ const checkInteractions = async () => {
     ])
 
     isFavorited.value = fav
-    myRating.value = ratingRes?.score || 0
+    myRating.value = ratingRes as number || 0
     isSubscribed.value = sub
     isPurchased.value = purchased
   } catch (error) {
@@ -893,7 +888,7 @@ const loadComments = async () => {
 
   commentLoading.value = true
   try {
-    const res = await commentApi.getByNoteId(noteId.value)
+    const res: any = await commentApi.getByNoteId(noteId.value)
     // 后端返回数组，前端适配
     const list = Array.isArray(res) ? res : (res.list || [])
     if (commentPage.value === 1) {
@@ -1050,6 +1045,70 @@ const goToReportNote = () => {
   })
 }
 
+const goToAuthor = (userId: number) => {
+  if (userId === userStore.userInfo?.id) {
+    uni.switchTab({ url: '/pages/user/index' })
+    return
+  }
+  uni.navigateTo({ url: `/pages/user/profile?id=${userId}` })
+}
+
+const getPaywallTitle = () => {
+  if (note.value?.visibility === 2) return '付费内容'
+  if (note.value?.visibility === 1) return '订阅可见'
+  if (note.value?.visibility === 3) return '订阅+付费'
+  return ''
+}
+
+const getPaywallDesc = () => {
+  if (note.value?.visibility === 2) return `付费 ¥${note.value.price}`
+  if (note.value?.visibility === 1) return '订阅该创作者查看'
+  if (note.value?.visibility === 3) return `订阅 ¥${note.value.price}/年 或付费 ¥${note.value.price}`
+  return ''
+}
+
+const buyNote = async () => {
+  if (!userStore.isLoggedIn) {
+    uni.navigateTo({ url: '/pages/auth/login' })
+    return
+  }
+  uni.navigateTo({ url: `/pages/note/publish?id=${noteId.value}` })
+}
+
+const subscribeCreator = async () => {
+  if (!userStore.isLoggedIn) {
+    uni.navigateTo({ url: '/pages/auth/login' })
+    return
+  }
+  uni.navigateTo({ url: `/pages/user/profile?id=${note.value?.userId}` })
+}
+
+const likeComment = async (comment: any) => {
+  if (!userStore.isLoggedIn) {
+    uni.navigateTo({ url: '/pages/auth/login' })
+    return
+  }
+  try {
+    if (comment.isLiked) {
+      await commentApi.unlikeComment(comment.id)
+      comment.isLiked = false
+      comment.likeCount--
+    } else {
+      await commentApi.likeComment(comment.id)
+      comment.isLiked = true
+      comment.likeCount++
+    }
+  } catch (error) {
+    uni.showToast({ title: '操作失败', icon: 'none' })
+  }
+}
+
+const reportComment = (comment: any) => {
+  uni.navigateTo({
+    url: `/pages/report/submit?targetType=2&targetId=${comment.id}`
+  })
+}
+
 // 下载文件
 const downloadFile = (att: any) => {
   const url = att.previewUrl || att.fileUrl
@@ -1082,7 +1141,7 @@ const downloadFile = (att: any) => {
 }
 
 const goBack = () => {
-  const pages = getCurrentPages()
+  const pages = getCurrentPages() as any[]
 
   if (pages.length > 1) {
     // 有页面栈，直接返回

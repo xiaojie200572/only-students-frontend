@@ -135,7 +135,7 @@ let reconnectAttempts = 0
 const maxReconnectAttempts = 5
 
 onShow(() => {
-  const pages = getCurrentPages()
+  const pages = getCurrentPages() as any[]
   canBack.value = pages.length > 1
   
   // 每次显示页面时刷新消息
@@ -187,7 +187,7 @@ onMounted(async () => {
     try {
       await messageApi.markConversationAsRead(conversationId.value)
       // 通知上一页更新未读数
-      const pages = getCurrentPages()
+      const pages = getCurrentPages() as any[]
       const prevPage = pages[pages.length - 2]
       if (prevPage) {
         prevPage.$vm?.fetchUnreadCounts?.()

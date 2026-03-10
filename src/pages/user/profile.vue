@@ -111,6 +111,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useUserStore } from '@/stores/user'
 import { get, post, del } from '@/api'
+import { getCurrentPage } from '@/utils'
 import type { UserInfo } from '@/types/api.types'
 import CustomModal from '@/components/CustomModal.vue'
 
@@ -184,9 +185,8 @@ const loading = ref(false)
 const creatorId = ref<number>(0)
 
 onMounted(() => {
-  const pages = getCurrentPages()
-  const currentPage = pages[pages.length - 1]
-  const id = currentPage.option.id
+  const currentPage = getCurrentPage()
+  const id = currentPage.options?.id
 
   if (id) {
     creatorId.value = parseInt(id)

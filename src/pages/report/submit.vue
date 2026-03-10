@@ -71,6 +71,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { reportApi } from '@/api/note'
+import { getCurrentPage } from '@/utils'
 
 const targetType = ref<number>(0)
 const targetId = ref<number>(0)
@@ -98,8 +99,7 @@ const targetTypeText = computed(() => {
 })
 
 onMounted(() => {
-  const pages = getCurrentPages()
-  const currentPage = pages[pages.length - 1]
+  const currentPage = getCurrentPage()
 
   targetType.value = parseInt(currentPage.options?.targetType || '0')
   targetId.value = parseInt(currentPage.options?.targetId || '0')

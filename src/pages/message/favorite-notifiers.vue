@@ -37,12 +37,12 @@
           @click="handleFavoriteClick(fav)"
         >
           <!-- 头像 -->
-          <image 
-            :src="fav.fromUserAvatar || '/static/default-avatar.svg'" 
-            class="fav-avatar" 
+          <image
+            :src="fav.fromUserAvatar || '/static/default-avatar.svg'"
+            class="fav-avatar"
             mode="aspectFill"
           />
-          
+
           <!-- 内容 -->
           <view class="fav-content">
             <view class="fav-header">
@@ -54,15 +54,15 @@
             </view>
             <text class="fav-note-title">{{ fav.noteTitle || '笔记' }}</text>
           </view>
-          
+
           <!-- 笔记封面 -->
-          <image 
-            v-if="fav.noteCoverImage" 
-            :src="fav.noteCoverImage" 
-            class="note-cover" 
+          <image
+            v-if="fav.noteCoverImage"
+            :src="fav.noteCoverImage"
+            class="note-cover"
             mode="aspectFill"
           />
-          
+
           <!-- 删除按钮 -->
           <view class="item-delete-btn" @click.stop="deleteFavoriteRecord(fav)">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -70,7 +70,7 @@
               <line x1="6" y1="6" x2="18" y2="18"/>
             </svg>
           </view>
-          
+
           <!-- 未读红点 -->
           <view v-if="fav.isRead === 0" class="unread-dot"></view>
         </view>
@@ -93,7 +93,7 @@ import { useUserStore } from '@/stores/user'
 const canBack = ref(false)
 
 onShow(() => {
-  const pages = getCurrentPages()
+  const pages = getCurrentPages() as any[]
   canBack.value = pages.length > 1
 })
 
@@ -144,7 +144,7 @@ const formatTime = (timeStr: string): string => {
   const date = new Date(timeStr)
   const now = new Date()
   const diff = now.getTime() - date.getTime()
-  
+
   if (diff < 60000) return '刚刚'
   if (diff < 3600000) return Math.floor(diff / 60000) + '分钟前'
   if (diff < 86400000) return Math.floor(diff / 3600000) + '小时前'
@@ -154,12 +154,12 @@ const formatTime = (timeStr: string): string => {
 
 const fetchFavorites = async (refresh = false) => {
   if (loading.value) return
-  
+
   if (refresh) {
     currentPage.value = 1
     favorites.value = []
   }
-  
+
   loading.value = true
   try {
     // 使用新的通知API获取收藏通知列表
@@ -194,7 +194,7 @@ const loadMore = () => {
 const handleFavoriteClick = async (fav: FavoriteWithUser) => {
   console.log('点击收藏通知，isRead:', fav.isRead, 'type:', typeof fav.isRead)
   // 标记已读
-  if (fav.isRead === 0 || fav.isRead === false || !fav.isRead) {
+  if (fav.isRead === 0 || !fav.isRead) {
     try {
       await favoriteNotificationApi.markAsRead(fav.id)
       fav.isRead = 1
@@ -204,11 +204,11 @@ const handleFavoriteClick = async (fav: FavoriteWithUser) => {
       console.error('标记已读失败:', error)
     }
   }
-  
+
   // 跳转到笔记详情
   if (fav.noteId) {
-    uni.navigateTo({ 
-      url: `/pages/note/detail?id=${fav.noteId}` 
+    uni.navigateTo({
+      url: `/pages/note/detail?id=${fav.noteId}`
     })
   }
 }

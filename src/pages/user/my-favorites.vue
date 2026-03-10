@@ -49,8 +49,8 @@
         </view>
         <scroll-view scroll-y class="folder-modal-list">
           <view 
-            v-for="folder in folders" 
-            :key="folder.id"
+            v-for="(folder, index) in folders" 
+            :key="folder.id ?? index"
             class="folder-modal-item"
             :class="{ active: currentFolderId === folder.id }"
             @click="selectFolder(folder)"

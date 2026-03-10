@@ -108,3 +108,9 @@ export const formatFileSize = (bytes: number): string => {
   const i = Math.floor(Math.log(bytes) / Math.log(k))
   return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
 }
+
+// 获取当前页面实例（带 options 类型）
+export const getCurrentPage = (): any => {
+  const pages = getCurrentPages()
+  return pages[pages.length - 1]
+}

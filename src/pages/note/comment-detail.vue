@@ -286,7 +286,7 @@ const submitReply = async () => {
 }
 
 const goBack = () => {
-  const pages = getCurrentPages()
+  const pages = getCurrentPages() as any[]
 
   if (pages.length > 1) {
     uni.navigateBack({ delta: 1 })

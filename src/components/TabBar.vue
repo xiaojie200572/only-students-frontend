@@ -55,7 +55,7 @@ const switchTab = (index: number) => {
   const tab = tabs.value[index]
 
   // 获取当前页面路径
-  const pages = getCurrentPages()
+  const pages = getCurrentPages() as any[]
   const currentPage = pages[pages.length - 1]
   const currentPath = currentPage ? '/' + currentPage.route : ''
 

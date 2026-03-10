@@ -25,7 +25,7 @@
         <view class="form-item">
           <text class="label">服务说明</text>
           <textarea v-model="config.description" placeholder="描述您的订阅服务，吸引用户订阅..." class="desc-input" maxlength="200" />
-          <text class="char-count">{{ config.description.length }}/200</text>
+          <text class="char-count">{{ config.description?.length }}/200</text>
         </view>
 
         <view class="preview-card">
