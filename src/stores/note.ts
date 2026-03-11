@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { ref, computed } from 'vue'
+import { ref } from 'vue'
 import { noteApi, favoriteApi } from '@/api/note'
 import { searchApi } from '@/api/search'
 import type { Note, SearchParams } from '@/types/api.types'
@@ -12,16 +12,8 @@ export const useNoteStore = defineStore('note', () => {
   const hasMore = ref(true)
   const currentPage = ref(1)
   const pageSize = ref(10)
-  const selectedCategory = ref<number | null>(null)
   const searchKeyword = ref('')
-
-  // 计算属性
-  const filteredNotes = computed(() => {
-    if (!selectedCategory.value) return notes.value
-    return notes.value.filter(note => note.categoryId === selectedCategory.value)
-  })
-
-  const updateFavoriteCount = (id: number, delta: number) =>{
+  const updateFavoriteCount = (id: number, delta: number) => {
     const note = notes.value.find(n => n.id === id)
     if (note) {
       note.favoriteCount = Math.max(0, (note.favoriteCount || 0) + delta)
@@ -43,7 +35,6 @@ export const useNoteStore = defineStore('note', () => {
       const searchParams: SearchParams = {
         page: currentPage.value,
         size: pageSize.value,
-        categoryId: selectedCategory.value || undefined,
         keyword: searchKeyword.value || undefined,
         ...params
       }
@@ -78,12 +69,6 @@ export const useNoteStore = defineStore('note', () => {
     } finally {
       loading.value = false
     }
-  }
-
-  // 选择分类
-  const selectCategory = (categoryId: number | null) => {
-    selectedCategory.value = categoryId
-    fetchNotes(true)
   }
 
   // 搜索笔记
@@ -141,15 +126,12 @@ export const useNoteStore = defineStore('note', () => {
   return {
     notes,
     currentNote,
-    filteredNotes,
     loading,
     hasMore,
     currentPage,
-    selectedCategory,
     searchKeyword,
     updateFavoriteCount,
     fetchNotes,
-    selectCategory,
     searchNotes,
     fetchNoteDetail,
     getNoteById,

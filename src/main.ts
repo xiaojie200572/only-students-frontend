@@ -6,6 +6,7 @@ import { useThemeStore } from "./stores/theme";
 import "./styles/theme.css";
 
 export function createApp() {
+  //asd
   const app = createSSRApp(App);
   const pinia = createPinia();
   app.use(pinia);

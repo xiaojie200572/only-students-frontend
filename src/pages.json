@@ -193,7 +193,6 @@
   "globalStyle": {
     "navigationBarTextStyle": "black",
     "navigationBarTitleText": "OnlyStudents",
-    "navigationBarBackgroundColor": "#FDFCF8",
-    "backgroundColor": "#FDFCF8"
+    "navigationBarBackgroundColor": "#FDFCF8"
   }
 }

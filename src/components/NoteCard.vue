@@ -2,25 +2,20 @@
   <view class="note-card" @click="$emit('click')">
     <!-- 封面图 -->
     <view class="note-cover">
-      <image
-        v-if="note.coverImage"
-        :src="note.coverImage"
-        mode="widthFix"
-        lazy-load
-        class="cover-image"
-      />
+      <image v-if="note.coverImage" :src="note.coverImage" mode="widthFix" lazy-load class="cover-image" />
       <!-- 默认封面占位图 -->
       <view v-else class="default-cover">
         <view class="default-cover-content">
           <text class="default-cover-icon">📝</text>
           <text class="default-cover-text">学习笔记</text>
         </view>
-        </view>
+      </view>
 
       <!-- 评分标签 -->
       <view v-if="note.averageRating !== undefined && note.averageRating !== null" class="rating-tag">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="#FFD700" stroke="#FFD700" stroke-width="2">
-          <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+          <polygon
+            points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
         </svg>
         <text>{{ note.averageRating.toFixed(1) }}</text>
       </view>
@@ -38,27 +33,22 @@
       <!-- 底部信息 -->
       <view class="note-meta">
         <view class="note-author">
-          <image
-            v-if="note.authorAvatar"
-            :src="note.authorAvatar"
-            class="author-avatar"
-            mode="aspectFill"
-          />
+          <image v-if="note.authorAvatar" :src="note.authorAvatar" class="author-avatar" mode="aspectFill" />
           <text class="author-name">{{ note.authorNickname }}</text>
         </view>
 
         <view class="note-stats">
           <view class="stat-item">
             <svg class="stat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-              <circle cx="12" cy="12" r="3"/>
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+              <circle cx="12" cy="12" r="3" />
             </svg>
             <text>{{ formatNumber(note.viewCount) }}</text>
           </view>
 
           <view class="stat-item">
             <svg class="stat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
+              <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
             </svg>
             <text>{{ formatNumber(note.favoriteCount || 0) }}</text>
           </view>
@@ -69,7 +59,7 @@
 </template>
 
 <script setup lang="ts">
-import type { Note} from '@/types/api.types'
+import type { Note } from '@/types/api.types'
 interface Props {
   note: Note
 }
@@ -237,12 +227,13 @@ const formatNumber = (num: number): string => {
   display: flex;
   align-items: center;
   gap: 4px;
+  text-shadow: none;
 }
 
 .cover-tags {
   position: absolute;
   bottom: 8px;
-  left: 8px;
+  left: 2px;
   right: 8px;
   display: flex;
   flex-wrap: wrap;
@@ -251,10 +242,12 @@ const formatNumber = (num: number): string => {
 }
 
 .cover-tag {
+  background: transparent;
   color: var(--accent-warm);
   font-size: 11px;
-  font-weight: 700;
-  text-shadow: none;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 10px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
