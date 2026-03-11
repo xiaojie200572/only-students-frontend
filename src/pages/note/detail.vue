@@ -369,7 +369,7 @@
           <svg :class="{ active: myRating > 0 }" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
           </svg>
-          <text>{{ typeof myRating === 'number' ? myRating : '评分' }}</text>
+          <text>{{ myRating > 0 ? myRating : '评分' }}</text>
         </view>
         <view class="action-btn" @click="toggleFavorite">
           <svg :class="{ active: isFavorited }" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -796,7 +796,7 @@ const loadNoteDetail = async () => {
     await loadPreviewUrls()
 
     // 笔记加载完成后再检查互动状态
-    checkInteractions()
+    await checkInteractions()
   } catch (error) {
     uni.showToast({ title: '加载失败', icon: 'none' })
   }
@@ -875,7 +875,8 @@ const checkInteractions = async () => {
     ])
 
     isFavorited.value = fav
-    myRating.value = (typeof ratingRes === 'number' ? ratingRes : 0) || 0
+    // ratingRes 是 NoteRatingDTO 对象，需要取 score 字段
+    myRating.value = ratingRes?.score || 0
     isSubscribed.value = sub
     isPurchased.value = purchased
   } catch (error) {
@@ -927,8 +928,15 @@ const submitRating = async (score: number) => {
   try {
     await ratingApi.rate(noteId.value, score)
     myRating.value = score
-    note.value!.averageRating = await ratingApi.getAverage(noteId.value)
-    note.value!.ratingCount = (note.value!.ratingCount || 0) + (myRating.value === score ? 1 : 0)
+    
+    // 获取最新的评分数据
+    const [avg, count] = await Promise.all([
+      ratingApi.getAverage(noteId.value),
+      ratingApi.getCount(noteId.value)
+    ])
+    note.value!.averageRating = avg
+    note.value!.ratingCount = count
+    
     closeRatingPopup()
     uni.showToast({ title: `已评分 ${score} 星`, icon: 'success' })
     // 通知首页刷新笔记数据
