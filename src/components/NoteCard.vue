@@ -104,13 +104,14 @@ const formatNumber = (num: number): string => {
 
 .cover-image {
   width: 100%;
-  height: auto;
+  height: 200px;
   display: block;
+  object-fit: cover;
 }
 
 .default-cover {
   width: 100%;
-  aspect-ratio: 3/4;
+  height: 200px;
   background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--border-light) 100%);
   display: flex;
   align-items: center;

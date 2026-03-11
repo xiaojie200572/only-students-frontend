@@ -618,6 +618,13 @@ const handleSave = async () => {
       originalAttachments.value = JSON.parse(JSON.stringify(form.value.attachments))
     }
 
+    // 找到第一个图片附件作为封面
+    const firstImage = form.value.attachments.find((att: any) => {
+      const type = (att.fileType || att.name || '').toLowerCase()
+      return ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp'].some(t => type.includes(t))
+    })
+    const coverImage = firstImage?.fileUrl || null
+
     const noteData = {
       title: form.value.title,
       content: form.value.content,
@@ -625,6 +632,7 @@ const handleSave = async () => {
       price: (form.value.visibility === 2 || form.value.visibility === 3) ? (parseFloat(form.value.price) || 0) : 0,
       tags: form.value.tags,
       attachments: JSON.stringify(form.value.attachments),
+      coverImage: coverImage,
       authorNickname: userStore.userInfo?.nickname,
       authorAvatar: userStore.userInfo?.avatar,
     }

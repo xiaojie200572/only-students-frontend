@@ -1,20 +1,17 @@
 <template>
   <view class="waterfall-wrapper">
-    <!-- 左侧列 -->
     <view class="waterfall-column">
       <view
-        v-for="note in leftColumnNotes"
+        v-for="note in column1Notes"
         :key="note.id"
         class="waterfall-item"
       >
         <NoteCard :note="note" @click="handleNoteClick(note)" />
       </view>
     </view>
-
-    <!-- 右侧列 -->
     <view class="waterfall-column">
       <view
-        v-for="note in rightColumnNotes"
+        v-for="note in column2Notes"
         :key="note.id"
         class="waterfall-item"
       >
@@ -38,16 +35,59 @@ const emit = defineEmits<{
   (e: 'noteClick', note: Note): void
 }>()
 
-// 固定两列
-const columnCount = 2
-
-// 将笔记分配到两列（交替分配）
-const leftColumnNotes = computed(() => {
-  return props.notes.filter((_, index) => index % columnCount === 0)
+// 基于估算高度的"最短列优先"算法
+const column1Notes = computed(() => {
+  const result: Note[] = []
+  const column2: Note[] = []
+  
+  // 估算每列高度（基于标题长度 + 是否有图片）
+  let height1 = 0
+  let height2 = 0
+  
+  for (const note of props.notes) {
+    // 估算每个卡片的高度
+    // 基础高度 + 标题高度 + 图片高度(如果有)
+    const titleHeight = note.title ? Math.ceil(note.title.length / 10) * 20 : 0
+    const hasImage = !!note.coverImage
+    // 假设图片高度约为 200-300，根据宽高比调整
+    const imageHeight = hasImage ? 250 : 0
+    const cardHeight = 100 + titleHeight + imageHeight
+    
+    if (height1 <= height2) {
+      result.push(note)
+      height1 += cardHeight
+    } else {
+      column2.push(note)
+      height2 += cardHeight
+    }
+  }
+  
+  return result
 })
 
-const rightColumnNotes = computed(() => {
-  return props.notes.filter((_, index) => index % columnCount === 1)
+const column2Notes = computed(() => {
+  const column1: Note[] = []
+  const result: Note[] = []
+  
+  let height1 = 0
+  let height2 = 0
+  
+  for (const note of props.notes) {
+    const titleHeight = note.title ? Math.ceil(note.title.length / 10) * 20 : 0
+    const hasImage = !!note.coverImage
+    const imageHeight = hasImage ? 250 : 0
+    const cardHeight = 100 + titleHeight + imageHeight
+    
+    if (height1 <= height2) {
+      column1.push(note)
+      height1 += cardHeight
+    } else {
+      result.push(note)
+      height2 += cardHeight
+    }
+  }
+  
+  return result
 })
 
 const handleNoteClick = (note: Note) => {
