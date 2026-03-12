@@ -57,7 +57,7 @@
     </scroll-view>
 
     <!-- 底部导航 -->
-    <TabBar :current="1" />
+    <TabBar :current="-1" />
   </view>
 </template>
 

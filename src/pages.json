@@ -92,9 +92,23 @@
       }
     },
     {
+      "path": "pages/user/data-center",
+      "style": {
+        "navigationBarTitleText": "数据中心",
+        "navigationStyle": "custom"
+      }
+    },
+    {
       "path": "pages/user/my-subscriptions",
       "style": {
         "navigationBarTitleText": "我的订阅",
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/user/subscription-feed",
+      "style": {
+        "navigationBarTitleText": "订阅动态",
         "navigationStyle": "custom"
       }
     },
