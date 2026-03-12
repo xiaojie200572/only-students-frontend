@@ -111,13 +111,15 @@
               <path d="M9 18l6-6-6-6"/>
             </svg>
           </view>
-          <view class="menu-item" @click="goToMyFavorites">
+          <view class="menu-item" @click="goToDataCenter">
             <view class="menu-icon" style="background: #FFF3E0;">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FF8B6B" stroke-width="2">
-                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+                <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
+                <line x1="12" y1="22.08" x2="12" y2="12"/>
               </svg>
             </view>
-            <text class="menu-text">我的收藏</text>
+            <text class="menu-text">数据中心</text>
             <svg class="menu-arrow" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M9 18l6-6-6-6"/>
             </svg>
@@ -364,8 +366,8 @@ const goToMyNotes = () => {
   uni.navigateTo({ url: '/pages/user/my-notes' })
 }
 
-const goToMyFavorites = () => {
-  uni.navigateTo({ url: '/pages/user/my-favorites' })
+const goToDataCenter = () => {
+  uni.navigateTo({ url: '/pages/user/data-center' })
 }
 
 const goToMySubscriptions = () => {

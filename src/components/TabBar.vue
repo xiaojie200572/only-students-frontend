@@ -46,7 +46,7 @@ withDefaults(defineProps<Props>(), {
 
 const tabs = ref([
   { label: '首页', path: '/pages/index/index', hasBadge: false },
-  { label: '订阅', path: '/pages/user/my-subscriptions', hasBadge: false },
+  { label: '订阅', path: '/pages/user/subscription-feed', hasBadge: false },
   { label: '收藏', path: '/pages/user/my-favorites', hasBadge: false },
   { label: '我的', path: '/pages/user/index', hasBadge: false }
 ])

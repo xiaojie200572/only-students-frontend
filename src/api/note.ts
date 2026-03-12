@@ -48,6 +48,11 @@ export const noteApi = {
     return get<Note[]>(`/note/school/${schoolId}`, { limit })
   },
 
+  // 获取订阅笔记
+  getSubscribed: (page: number = 1, size: number = 20) => {
+    return get<Note[]>('/note/subscribed', { page, size })
+  },
+
   // 获取用户笔记列表
   getByUserId: (userId: number) => {
     return get<Note[]>(`/note/user/${userId}`)
