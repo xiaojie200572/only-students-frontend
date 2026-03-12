@@ -254,21 +254,7 @@ const loadCreatorSummary = async () => {
   if (!creatorId.value) return
   
   try {
-    // TODO: 暂时使用模拟数据
-    const result = {
-      totalNotes: 15,
-      totalViews: 12850,
-      totalSubscribers: 856,
-      totalIncome: 258000,
-      avgRating: 4.5,
-      totalRatings: 128,
-      totalFavorites: 3250,
-      totalComments: 890,
-      totalShares: 456,
-      todayIncome: 4800,
-      weekIncome: 25800,
-      monthIncome: 128000
-    }
+    const result = await analyticsApi.getCreatorSummary(creatorId.value)
     creatorSummary.value = result
     
     incomeData.value = {
@@ -285,35 +271,30 @@ const loadNotes = async () => {
   if (!creatorId.value) return
   
   try {
-    const mockNotes: NoteStats[] = [
-      { id: 1, noteId: 101, creatorId: 1, totalViews: 5200, totalFavorites: 320, totalComments: 85, totalShares: 45, avgReadingTime: 180, completionRate: 0.75, heatScore: 8500 },
-      { id: 2, noteId: 102, creatorId: 1, totalViews: 3800, totalFavorites: 210, totalComments: 62, totalShares: 28, avgReadingTime: 150, completionRate: 0.68, heatScore: 6200 },
-      { id: 3, noteId: 103, creatorId: 1, totalViews: 2100, totalFavorites: 150, totalComments: 45, totalShares: 18, avgReadingTime: 120, completionRate: 0.65, heatScore: 4500 },
-      { id: 4, noteId: 104, creatorId: 1, totalViews: 1200, totalFavorites: 80, totalComments: 25, totalShares: 12, avgReadingTime: 90, completionRate: 0.55, heatScore: 2800 },
-      { id: 5, noteId: 105, creatorId: 1, totalViews: 800, totalFavorites: 45, totalComments: 18, totalShares: 8, avgReadingTime: 75, completionRate: 0.48, heatScore: 1500 },
-    ]
-    notes.value = mockNotes
+    const result = await analyticsApi.getNotesByCreator(creatorId.value)
+    notes.value = result || []
   } catch (error) {
     console.error('获取笔记列表失败:', error)
   }
 }
 
-const getMockData = (days: number) => {
-  const data = []
-  for (let i = days - 1; i >= 0; i--) {
-    const date = new Date()
-    date.setDate(date.getDate() - i)
-    data.push({
-      statsDate: date.toISOString().split('T')[0],
-      newViews: Math.floor(Math.random() * 300) + 100,
-      newFavorites: Math.floor(Math.random() * 30) + 5,
-      newComments: Math.floor(Math.random() * 20) + 3,
-      newShares: Math.floor(Math.random() * 15) + 2,
-      newSubscribers: Math.floor(Math.random() * 20) + 3,
-      incomeAmount: Math.floor(Math.random() * 5000) + 1000
-    })
+const getTrendData = async (days: number) => {
+  if (!creatorId.value) return []
+  
+  try {
+    const endDate = new Date()
+    const startDate = new Date()
+    startDate.setDate(startDate.getDate() - days)
+    
+    const startStr = startDate.toISOString().split('T')[0]
+    const endStr = endDate.toISOString().split('T')[0]
+    
+    const result = await analyticsApi.getDailyStatsRange(creatorId.value, startStr, endStr)
+    return result || []
+  } catch (error) {
+    console.error('获取趋势数据失败:', error)
+    return []
   }
-  return data
 }
 
 const formatDate = (dateStr: string) => {
@@ -439,7 +420,7 @@ const updateIncomeChart = () => {
 }
 
 const loadIncomeData = async () => {
-  incomeChartData.value = getMockData(incomeDays.value)
+  incomeChartData.value = await getTrendData(incomeDays.value)
   if (!incomeChartInstance) {
     initIncomeChart()
   } else {
@@ -494,7 +475,7 @@ const updateInteractionChart = () => {
 }
 
 const loadInteractionData = async () => {
-  interactionChartData.value = getMockData(interactionDays.value)
+  interactionChartData.value = await getTrendData(interactionDays.value)
   if (!interactionChartInstance) {
     initInteractionChart()
   } else {
@@ -549,7 +530,7 @@ const updateTrafficChart = () => {
 }
 
 const loadTrafficData = async () => {
-  trafficChartData.value = getMockData(trafficDays.value)
+  trafficChartData.value = await getTrendData(trafficDays.value)
   if (!trafficChartInstance) {
     initTrafficChart()
   } else {
