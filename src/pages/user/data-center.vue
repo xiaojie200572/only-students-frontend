@@ -255,6 +255,8 @@ const loadCreatorSummary = async () => {
   
   try {
     const result = await analyticsApi.getCreatorSummary(creatorId.value)
+    if (!result) return
+    
     creatorSummary.value = result
     
     incomeData.value = {
