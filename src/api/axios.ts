@@ -36,58 +36,65 @@ instance.interceptors.request.use(
   }
 )
 
-// 响应拦截器
-instance.interceptors.response.use(
-  (response: AxiosResponse) => {
-    uni.hideLoading()
+  // 响应拦截器
+  instance.interceptors.response.use(
+    (response: AxiosResponse) => {
+      uni.hideLoading()
 
-    const { data } = response
+      const { data } = response
 
-    // 业务逻辑错误
-    if (data.code !== 200) {
-      return Promise.reject(data)
-    }
+      // 业务逻辑错误
+      if (data.code !== 200) {
+        return Promise.reject(data)
+      }
 
-    return data.data
-  },
-  (error) => {
-    uni.hideLoading()
+      return data.data
+    },
+    (error) => {
+      uni.hideLoading()
 
-    console.error('请求错误:', error)
+      console.error('请求错误:', error)
 
-    let errorMessage = '请求失败'
+      let errorMessage = '请求失败'
 
-    if (error.response) {
-      const { status, data } = error.response
-      console.log('Error response full:', JSON.stringify(error.response))
-      console.log('Error data:', data)
-      console.log('Error data keys:', Object.keys(data))
-      
-      if (data) {
-        errorMessage = data.message || data.msg || data.error || `请求失败(${status})`
+      if (error.response) {
+        const { status, data } = error.response
+        console.log('Error response full:', JSON.stringify(error.response))
+        console.log('Error data:', data)
+        console.log('Error data keys:', Object.keys(data))
+        
+        if (data) {
+          errorMessage = data.message || data.msg || data.error || `请求失败(${status})`
+        } else {
+          errorMessage = `请求失败(${status})`
+        }
+
+        if (status === 401) {
+          uni.removeStorageSync('token')
+          uni.removeStorageSync('userId')
+          errorMessage = '登录已过期，请重新登录'
+
+          setTimeout(() => {
+            uni.navigateTo({ url: '/pages/auth/login' })
+          }, 1500)
+        }
+      } else if (error.request) {
+        errorMessage = '网络错误，请检查网络连接'
       } else {
-        errorMessage = `请求失败(${status})`
+        errorMessage = '请求配置错误'
       }
 
-      if (status === 401) {
-        uni.removeStorageSync('token')
-        uni.removeStorageSync('userId')
-        errorMessage = '登录已过期，请重新登录'
+      // 显示错误提示
+      uni.showToast({
+        title: errorMessage,
+        icon: 'none',
+        duration: 2000
+      })
 
-        setTimeout(() => {
-          uni.navigateTo({ url: '/pages/auth/login' })
-        }, 1500)
-      }
-    } else if (error.request) {
-      errorMessage = '网络错误，请检查网络连接'
-    } else {
-      errorMessage = '请求配置错误'
+      // 返回错误信息给调用方
+      return Promise.reject(error.response?.data || { message: errorMessage })
     }
-
-    // 返回错误信息给调用方，而不是直接显示 toast
-    return Promise.reject(error.response?.data || { message: errorMessage })
-  }
-)
+  )
 
 // 封装请求方法（保持和之前一样的API）
 export const request = <T>(config: AxiosRequestConfig): Promise<T> => {
