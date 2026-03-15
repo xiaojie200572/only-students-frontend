@@ -388,8 +388,7 @@ const chooseFiles = async () => {
   try {
     // #ifdef H5
     uni.chooseFile({
-      count: Math.min(20 - form.value.attachments.length, 5), // 每次最多选5个
-      type: 'file',
+      count: Math.min(20 - form.value.attachments.length, 5),
       extension: ['pdf', 'doc', 'docx', 'ppt', 'pptx', 'xls', 'xlsx', 'txt', 'md', 'json', 'xml', 'csv', 'jpg', 'jpeg', 'png', 'gif', 'webp'],
       success: async (res: any) => {
         const files = res.tempFiles || []

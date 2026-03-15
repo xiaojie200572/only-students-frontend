@@ -432,13 +432,10 @@ const changeAvatar = async () => {
       if (typeof uni.cropImage === 'function') {
         try {
           const cropRes = await new Promise<any>((resolve, reject) => {
-            uni.cropImage({
+            (uni as any).cropImage({
               src: tempFilePath,
-              success: (res) => resolve(res),
-              fail: (err) => reject(err),
-              width: 300,
-              height: 300,
-              scale: 1
+              success: (res: any) => resolve(res),
+              fail: (err: any) => reject(err)
             })
           })
           await uploadAndSaveAvatar(cropRes.tempFilePath)

@@ -1,4 +1,5 @@
 {
+  "darkMode": true,
   "pages": [
     {
       "path": "pages/index/index",
@@ -207,6 +208,13 @@
   "globalStyle": {
     "navigationBarTextStyle": "black",
     "navigationBarTitleText": "OnlyStudents",
-    "navigationBarBackgroundColor": "#FDFCF8"
+    "navigationBarBackgroundColor": "#FDFCF8",
+    "backgroundColor": "#FDFCF8"
+  },
+  "lightStyle": {
+    "backgroundColor": "#FDFCF8"
+  },
+  "darkStyle": {
+    "backgroundColor": "#0F1419"
   }
 }

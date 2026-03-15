@@ -27,36 +27,82 @@ export const useThemeStore = defineStore('theme', () => {
   // 应用主题
   const applyTheme = () => {
     const theme = isDark.value ? 'dark' : 'light'
+    const bgColor = isDark.value ? '#0F1419' : '#FDFCF8'
+    const textColor = isDark.value ? '#F5F3EE' : '#2C2419'
 
     uni.setStorageSync('theme', theme)
 
-    // H5: 修改 CSS 类
+    // H5 端：使用 JS 设置 CSS 变量
+    // #ifdef H5
     if (typeof document !== 'undefined') {
-      const html = document.documentElement
-      const body = document.body
+      const lightColors = {
+        '--bg-primary': '#FDFCF8',
+        '--bg-secondary': '#F5F3EE',
+        '--bg-card': '#FFFFFF',
+        '--bg-hover': '#F0EDE6',
+        '--text-primary': '#2C2419',
+        '--text-secondary': '#6B5D4D',
+        '--text-tertiary': '#9B8B7A',
+        '--text-inverse': '#FFFFFF',
+        '--accent-warm': '#E07B54',
+        '--accent-coral': '#FF8B6B',
+        '--accent-gold': '#D4A574',
+        '--accent-olive': '#8B9A6D',
+        '--border-light': '#E8E4DC',
+        '--border-medium': '#D4CFC4',
+      }
 
-      // 清除所有主题类
-      html?.classList.remove('theme-light', 'theme-dark')
-      body?.classList.remove('theme-light', 'theme-dark')
+      const darkColors = {
+        '--bg-primary': '#0F1419',
+        '--bg-secondary': '#1A1F26',
+        '--bg-card': '#252B33',
+        '--bg-hover': '#2D343C',
+        '--text-primary': '#F5F3EE',
+        '--text-secondary': '#B8B0A3',
+        '--text-tertiary': '#7A7266',
+        '--text-inverse': '#0F1419',
+        '--accent-warm': '#E07B54',
+        '--accent-coral': '#FF8B6B',
+        '--accent-gold': '#D4A574',
+        '--accent-olive': '#8B9A6D',
+        '--border-light': '#2D343C',
+        '--border-medium': '#3D454F',
+      }
 
-      // 给 html 和 body 都添加主题类
-      html?.classList.add(`theme-${theme}`)
-      body?.classList.add(`theme-${theme}`)
+      const colors = isDark.value ? darkColors : lightColors
 
-      // 找到 uni-app 的 page 元素并添加类
-      const pages = document.querySelectorAll('page')
-      pages.forEach(p => {
-        p.classList.remove('theme-light', 'theme-dark')
-        p.classList.add(`theme-${theme}`)
+      Object.entries(colors).forEach(([key, value]) => {
+        document.body.style.setProperty(key, value)
+        document.documentElement.style.setProperty(key, value)
       })
-    }
 
-    // 小程序: 调用 API
+      document.body.style.backgroundColor = bgColor
+      document.body.style.color = textColor
+      
+      const uniPageBody = document.querySelector('uni-page-body') as HTMLElement
+      if (uniPageBody) {
+        uniPageBody.style.setProperty('background-color', bgColor, 'important')
+      }
+
+      const navBar = document.querySelector('.uni-page-head') as HTMLElement
+      if (navBar) {
+        navBar.style.backgroundColor = bgColor
+        navBar.style.color = textColor
+      }
+
+      document.documentElement.classList.remove('theme-light', 'theme-dark')
+      document.body.classList.remove('theme-light', 'theme-dark')
+      document.documentElement.classList.add(`theme-${theme}`)
+      document.body.classList.add(`theme-${theme}`)
+    }
+    // #endif
+
+    // 小程序端：使用官方 API
     // #ifdef MP
     uni.setBackgroundColor({
-      backgroundColor: isDark ? '#0F1419' : '#FDFCF8',
-      backgroundColorTop: isDark ? '#0F1419' : '#FDFCF8',
-      backgroundColorBottom: isDark ? '#0F1419' : '#FDFCF8'
+      backgroundColor: bgColor,
+      backgroundColorTop: bgColor,
+      backgroundColorBottom: bgColor
     })
     // #endif
 

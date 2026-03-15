@@ -1,26 +1,18 @@
 <template>
   <view class="user-page">
     <!-- 自定义弹窗 -->
-    <CustomModal
-      :visible="modalVisible"
-      :title="modalTitle"
-      :content="modalContent"
-      :confirm-text="modalConfirmText"
-      :cancel-text="modalCancelText"
-      :show-cancel="modalShowCancel"
-      :confirm-color="modalConfirmColor"
-      @confirm="handleModalConfirm"
-      @cancel="handleModalCancel"
-      @close="handleModalCancel"
-    />
+    <CustomModal :visible="modalVisible" :title="modalTitle" :content="modalContent" :confirm-text="modalConfirmText"
+      :cancel-text="modalCancelText" :show-cancel="modalShowCancel" :confirm-color="modalConfirmColor"
+      @confirm="handleModalConfirm" @cancel="handleModalCancel" @close="handleModalCancel" />
 
     <!-- 导航栏 -->
     <view class="page-nav">
       <text class="nav-title">我的</text>
       <view class="settings-btn" @click="goToSettings">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <circle cx="12" cy="12" r="3"/>
-          <path d="M12 1v6m0 6v6m4.22-10.22l4.24-4.24M6.34 6.34L2.1 2.1m17.9 9.9h-6m-6 0H1.9m16.32 4.24l4.24 4.24M6.34 17.66l-4.24 4.24"/>
+          <circle cx="12" cy="12" r="3" />
+          <path
+            d="M12 1v6m0 6v6m4.22-10.22l4.24-4.24M6.34 6.34L2.1 2.1m17.9 9.9h-6m-6 0H1.9m16.32 4.24l4.24 4.24M6.34 17.66l-4.24 4.24" />
         </svg>
       </view>
     </view>
@@ -42,9 +34,9 @@
       <!-- 用户信息卡片 -->
       <view class="user-card">
         <view class="user-header">
-          <image class="user-avatar" :src="userInfo?.avatar || '/static/default-avatar.svg'" mode="aspectFill"/>
+          <image class="user-avatar" :src="userInfo?.avatar || '/static/default-avatar.svg'" mode="aspectFill" />
           <view class="user-info">
-            <text class="user-name">{{ userInfo?.nickname|| '用户' }}</text>
+            <text class="user-name">{{ userInfo?.nickname || '用户' }}</text>
             <text class="user-id">ID: {{ userInfo?.id }}</text>
             <text v-if="userInfo?.schoolName" class="user-school">{{ userInfo.schoolName }}</text>
           </view>
@@ -68,8 +60,8 @@
             <text class="stat-label">关注</text>
           </view>
           <view class="stat-box">
-            <text class="stat-num">{{ formatNumber(stats.likeCount) }}</text>
-            <text class="stat-label">获赞</text>
+            <text class="stat-num">{{ formatNumber(stats.averageRating) }}</text>
+            <text class="stat-label">评分</text>
           </view>
         </view>
       </view>
@@ -100,54 +92,59 @@
           <view class="menu-item" @click="goToMyNotes">
             <view class="menu-icon" style="background: #FFE4E1;">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#E07B54" stroke-width="2">
-                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
-                <line x1="9" y1="9" x2="15" y2="9"/>
-                <line x1="9" y1="15" x2="15" y2="15"/>
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                <line x1="9" y1="9" x2="15" y2="9" />
+                <line x1="9" y1="15" x2="15" y2="15" />
               </svg>
             </view>
             <text class="menu-text">我的笔记</text>
             <text v-if="stats.noteCount > 0" class="menu-badge">{{ stats.noteCount }}</text>
-            <svg class="menu-arrow" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M9 18l6-6-6-6"/>
+            <svg class="menu-arrow" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              stroke-width="2">
+              <path d="M9 18l6-6-6-6" />
             </svg>
           </view>
           <view class="menu-item" @click="goToDataCenter">
             <view class="menu-icon" style="background: #FFF3E0;">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FF8B6B" stroke-width="2">
-                <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
-                <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
-                <line x1="12" y1="22.08" x2="12" y2="12"/>
+                <path
+                  d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
+                <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
+                <line x1="12" y1="22.08" x2="12" y2="12" />
               </svg>
             </view>
             <text class="menu-text">数据中心</text>
-            <svg class="menu-arrow" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M9 18l6-6-6-6"/>
+            <svg class="menu-arrow" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              stroke-width="2">
+              <path d="M9 18l6-6-6-6" />
             </svg>
           </view>
           <view class="menu-item" @click="goToMySubscriptions">
             <view class="menu-icon" style="background: #E8F5E9;">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8B9A6D" stroke-width="2">
-                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-                <circle cx="9" cy="7" r="4"/>
-                <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
-                <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                <circle cx="9" cy="7" r="4" />
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                <path d="M16 3.13a4 4 0 0 1 0 7.75" />
               </svg>
             </view>
             <text class="menu-text">我的订阅</text>
-            <svg class="menu-arrow" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M9 18l6-6-6-6"/>
+            <svg class="menu-arrow" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              stroke-width="2">
+              <path d="M9 18l6-6-6-6" />
             </svg>
           </view>
           <view class="menu-item" @click="goToMyOrders">
             <view class="menu-icon" style="background: #E3F2FD;">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2196F3" stroke-width="2">
-                <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/>
-                <line x1="1" y1="10" x2="23" y2="10"/>
+                <rect x="1" y="4" width="22" height="16" rx="2" ry="2" />
+                <line x1="1" y1="10" x2="23" y2="10" />
               </svg>
             </view>
             <text class="menu-text">我的订单</text>
-            <svg class="menu-arrow" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M9 18l6-6-6-6"/>
+            <svg class="menu-arrow" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              stroke-width="2">
+              <path d="M9 18l6-6-6-6" />
             </svg>
           </view>
         </view>
@@ -159,24 +156,27 @@
           <view class="menu-item" @click="goToPublish">
             <view class="menu-icon" style="background: #F3E5F5;">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#9C27B0" stroke-width="2">
-                <path d="M12 20h9M12 20V10M12 20l-7-7m7 7V4m0 6l7-7"/>
+                <path d="M12 20h9M12 20V10M12 20l-7-7m7 7V4m0 6l7-7" />
               </svg>
             </view>
             <text class="menu-text">发布笔记</text>
-            <svg class="menu-arrow" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M9 18l6-6-6-6"/>
+            <svg class="menu-arrow" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              stroke-width="2">
+              <path d="M9 18l6-6-6-6" />
             </svg>
           </view>
           <view class="menu-item" @click="goToCreatorSettings">
             <view class="menu-icon" style="background: #FFF8E1;">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FFC107" stroke-width="2">
-                <circle cx="12" cy="12" r="3"/>
-                <path d="M12 1v6m0 6v6m4.22-10.22l4.24-4.24M6.34 6.34L2.1 2.1m17.9 9.9h-6m-6 0H1.9m16.32 4.24l4.24 4.24M6.34 17.66l-4.24 4.24"/>
+                <circle cx="12" cy="12" r="3" />
+                <path
+                  d="M12 1v6m0 6v6m4.22-10.22l4.24-4.24M6.34 6.34L2.1 2.1m17.9 9.9h-6m-6 0H1.9m16.32 4.24l4.24 4.24M6.34 17.66l-4.24 4.24" />
               </svg>
             </view>
             <text class="menu-text">创作者设置</text>
-            <svg class="menu-arrow" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M9 18l6-6-6-6"/>
+            <svg class="menu-arrow" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              stroke-width="2">
+              <path d="M9 18l6-6-6-6" />
             </svg>
           </view>
         </view>
@@ -188,38 +188,42 @@
           <view class="menu-item" @click="showHelp">
             <view class="menu-icon" style="background: #E0F2F1;">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#009688" stroke-width="2">
-                <circle cx="12" cy="12" r="10"/>
-                <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
-                <line x1="12" y1="17" x2="12.01" y2="17"/>
+                <circle cx="12" cy="12" r="10" />
+                <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+                <line x1="12" y1="17" x2="12.01" y2="17" />
               </svg>
             </view>
             <text class="menu-text">帮助中心</text>
-            <svg class="menu-arrow" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M9 18l6-6-6-6"/>
+            <svg class="menu-arrow" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              stroke-width="2">
+              <path d="M9 18l6-6-6-6" />
             </svg>
           </view>
           <view class="menu-item" @click="contactService">
             <view class="menu-icon" style="background: #FCE4EC;">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#E91E63" stroke-width="2">
-                <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>
+                <path
+                  d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
               </svg>
             </view>
             <text class="menu-text">联系客服</text>
-            <svg class="menu-arrow" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M9 18l6-6-6-6"/>
+            <svg class="menu-arrow" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              stroke-width="2">
+              <path d="M9 18l6-6-6-6" />
             </svg>
           </view>
           <view class="menu-item" @click="logout">
             <view class="menu-icon" style="background: #FFEBEE;">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#F44336" stroke-width="2">
-                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
-                <polyline points="16,17 21,12 16,7"/>
-                <line x1="21" y1="12" x2="9" y2="12"/>
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                <polyline points="16,17 21,12 16,7" />
+                <line x1="21" y1="12" x2="9" y2="12" />
               </svg>
             </view>
             <text class="menu-text" style="color: #F44336;">退出登录</text>
-            <svg class="menu-arrow" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M9 18l6-6-6-6"/>
+            <svg class="menu-arrow" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              stroke-width="2">
+              <path d="M9 18l6-6-6-6" />
             </svg>
           </view>
         </view>
@@ -238,6 +242,7 @@ import { walletApi, subscriptionApi, noteApi, userApi } from '@/api'
 import type { WalletInfo } from '@/types/api.types'
 import TabBar from '@/components/TabBar.vue'
 import CustomModal from '@/components/CustomModal.vue'
+import { number } from 'echarts'
 
 const userStore = useUserStore()
 
@@ -295,7 +300,7 @@ const stats = ref({
   noteCount: 0,
   subscriberCount: 0,
   subscriptionCount: 0,
-  likeCount: 0
+  averageRating: 0
 })
 
 const isLoggedIn = computed(() => userStore.isLoggedIn)
@@ -310,11 +315,10 @@ onMounted(() => {
 const loadUserData = async () => {
   try {
     // 并行获取数据
-    const [userRes, walletRes, notesRes, subscribersRes, subscriptionsRes] = await Promise.all([
+    const [userRes, walletRes, notesRes, subscriptionsRes] = await Promise.all([
       userApi.getCurrentUser().catch(() => null),
       walletApi.getWallet().catch(() => null),
       noteApi.getMyNotes().catch(() => []),
-      subscriptionApi.getMySubscribers().catch(() => []),
       subscriptionApi.getMySubscriptions().catch(() => [])
     ])
 
@@ -327,15 +331,14 @@ const loadUserData = async () => {
     } else {
       console.log('用户数据为空')
     }
+    const noteCount = notesRes?.length || 0
+    const notes: any[] = notesRes || []
+    const totalRating = notes.reduce((sum: number, note: any) => sum + (note.averageRating || 0), 0)
 
     wallet.value = walletRes
-    stats.value.noteCount = notesRes?.length || 0
+    stats.value.noteCount = noteCount
     stats.value.subscriptionCount = subscriptionsRes?.length || 0
-
-    // 计算总点赞数
-    const totalLikes = notesRes?.reduce((sum: number, note: any) => sum + (note.likeCount || 0), 0) || 0
-    stats.value.likeCount = totalLikes
-
+    stats.value.averageRating = noteCount > 0 ? (Number)((totalRating / noteCount).toFixed(1)) : 0
   } catch (error) {
     console.error('加载用户数据失败:', error)
   }

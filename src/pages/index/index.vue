@@ -116,6 +116,8 @@ import type { Note } from '@/types/api.types'
 
 const userStore = useUserStore()
 
+const loading = computed(() => loadingMore.value)
+
 // 分类筛选
 const activeCategory = ref('all') // 'all' or 'school'
 const activeTag = ref('')

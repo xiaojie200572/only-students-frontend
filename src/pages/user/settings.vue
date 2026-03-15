@@ -79,7 +79,7 @@
             </svg>
           </view>
         </view>
-        
+
         <!-- 验证方式选择 -->
         <view class="pwd-method-tabs" v-if="!pwdMethodSelected">
           <text class="pwd-method-title">选择验证方式</text>
@@ -380,7 +380,7 @@ let pwdCountdownTimer: ReturnType<typeof setInterval> | null = null
 const validateAccount = () => {
   const account = bindForm.value.account.trim()
   accountError.value = ''
-  
+
   if (!account) {
     accountError.value = `请输入${bindType.value === 'phone' ? '手机号' : '邮箱'}`
     return
@@ -508,7 +508,7 @@ const sendPwdCode = async () => {
       type: 'RESET_PASSWORD' as any
     })
     uni.showToast({ title: '验证码已发送', icon: 'success' })
-    
+
     pwdCountdown.value = 60
     pwdCountdownTimer = setInterval(() => {
       pwdCountdown.value--
@@ -557,9 +557,14 @@ const submitChangePwd = async () => {
 
   try {
     if (pwdMethodSelected.value === 'code') {
+      const account = pwdVerifyType.value === 'phone' ? userInfo.value?.phone : userInfo.value?.email
+      if (!account) {
+        uni.showToast({ title: '请先绑定手机号或邮箱', icon: 'none' })
+        return
+      }
       // 验证码方式 - 调用后端重置密码接口
       await userApi.resetPasswordByCode({
-        account: pwdVerifyType.value === 'phone' ? userInfo.value?.phone : userInfo.value?.email,
+        account: account,
         verifyCode: pwdForm.value.code,
         newPassword: pwdForm.value.newPassword
       })
@@ -570,7 +575,7 @@ const submitChangePwd = async () => {
         newPassword: pwdForm.value.newPassword
       })
     }
-    
+
     uni.showToast({ title: '密码修改成功', icon: 'success' })
     closeChangePwdModal()
   } catch (error: any) {
@@ -625,7 +630,7 @@ const sendBindCode = async () => {
       type: 'BIND' as any
     })
     uni.showToast({ title: '验证码已发送', icon: 'success' })
-    
+
     countdown.value = 60
     countdownTimer = setInterval(() => {
       countdown.value--
@@ -644,7 +649,7 @@ const submitBind = async () => {
   const code = bindForm.value.code.trim()
 
   codeError.value = ''
-  
+
   if (!account) {
     accountError.value = `请输入${bindType.value === 'phone' ? '手机号' : '邮箱'}`
     return
@@ -662,10 +667,10 @@ const submitBind = async () => {
       [bindType.value]: account,
       verifyCode: code
     })
-    
+
     userStore.setUserInfo(updatedUserInfo)
     uni.setStorageSync('userInfo', updatedUserInfo)
-    
+
     uni.showToast({ title: '绑定成功', icon: 'success' })
     closeBindModal()
   } catch (error: any) {
@@ -696,7 +701,7 @@ const clearCache = async () => {
     title: '提示',
     content: '确定要清除缓存吗？'
   })
-  
+
   if (confirmed) {
     // 清除缓存逻辑
     cacheSize.value = '0 B'

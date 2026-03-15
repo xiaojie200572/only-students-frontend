@@ -37,26 +37,26 @@
 
 .theme-dark, html.theme-dark, body.theme-dark, page.theme-dark {
   /* 夜间主题 - 深夜自习室 */
-  --bg-primary: #0F1419 ;
-  --bg-secondary: #1A1F26 ;
-  --bg-card: #252B33 ;
-  --bg-hover: #2D343C ;
+  --bg-primary: #0F1419 !important;
+  --bg-secondary: #1A1F26 !important;
+  --bg-card: #252B33 !important;
+  --bg-hover: #2D343C !important;
 
-  --text-primary: #F5F3EE ;
-  --text-secondary: #B8B0A3 ;
-  --text-tertiary: #7A7266 ;
-  --text-inverse: #0F1419 ;
+  --text-primary: #F5F3EE !important;
+  --text-secondary: #B8B0A3 !important;
+  --text-tertiary: #7A7266 !important;
+  --text-inverse: #0F1419 !important;
 
   /* 强调色与白天模式保持一致 */
-  --accent-warm: #E07B54 ;
-  --accent-coral: #FF8B6B ;
-  --accent-gold: #D4A574 ;
-  --accent-olive: #8B9A6D ;
+  --accent-warm: #E07B54 !important;
+  --accent-coral: #FF8B6B !important;
+  --accent-gold: #D4A574 !important;
+  --accent-olive: #8B9A6D !important;
 
-  --border-light: #2D343C ;
-  --border-medium: #3D454F ;
+  --border-light: #2D343C !important;
+  --border-medium: #3D454F !important;
 
-  --shadow-soft: 0 2px 12px rgba(0, 0, 0, 0.3) ;
+  --shadow-soft: 0 2px 12px rgba(0, 0, 0, 0.3) !important;
   --shadow-medium: 0 4px 24px rgba(0, 0, 0, 0.4) !important;
   --shadow-strong: 0 8px 40px rgba(0, 0, 0, 0.5) !important;
 }
@@ -205,4 +205,44 @@ body, page, html {
 
 .theme-toggle:hover {
   background: var(--bg-hover);
+}
+
+/* ==================== 覆盖 uni-app 框架硬编码 ==================== */
+
+/* 最高优先级覆盖 - 导航栏背景 */
+.uni-page-head,
+uni-page-head {
+  background-color: var(--bg-primary) !important;
+  color: var(--text-primary) !important;
+}
+
+/* 最高优先级覆盖 - 页面 body 背景 */
+body,
+body.theme-dark,
+body.theme-light {
+  background-color: var(--bg-primary) !important;
+}
+
+/* 最高优先级覆盖 - uni-app 页面容器 */
+uni-page-body,
+uni-page-body.theme-dark,
+uni-page-body.theme-light {
+  background-color: var(--bg-primary) !important;
+}
+
+/* 确保所有关键元素使用 CSS 变量 */
+.uni-ui,
+uni-view,
+.uni-page {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+/* 覆盖 uni-app 内部可能硬编码的颜色 */
+.uni-modal {
+  background-color: var(--bg-card) !important;
+}
+
+.uni-mask {
+  background-color: rgba(0, 0, 0, 0.5) !important;
 }

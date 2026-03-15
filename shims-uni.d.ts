@@ -2,9 +2,13 @@
 import 'vue'
 
 declare module '@vue/runtime-core' {
-  type Hooks = App.AppInstance & Page.PageInstance;
+  interface ComponentCustomOptions {
+    options?: Record<string, any>
+  }
+}
 
-  interface ComponentCustomOptions extends Hooks {
-
+declare module '@dcloudio/uni-app' {
+  interface PageInstance {
+    options?: Record<string, any>
   }
 }

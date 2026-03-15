@@ -74,7 +74,7 @@ import { ref, onMounted } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import { messageApi } from '@/api/message'
 import { useUserStore } from '@/stores/user'
-import {type Conversation } from '@/types/api.types'
+import type { Conversation } from '@/types/api.types'
 
 const canBack = ref(false)
 

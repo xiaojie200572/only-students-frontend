@@ -875,8 +875,7 @@ const checkInteractions = async () => {
     ])
 
     isFavorited.value = fav
-    // ratingRes 是 NoteRatingDTO 对象，需要取 score 字段
-    myRating.value = ratingRes?.score || 0
+    myRating.value = ratingRes || 0
     isSubscribed.value = sub
     isPurchased.value = purchased
   } catch (error) {
